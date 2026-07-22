@@ -30,6 +30,13 @@ abstract class TestcontainersBuildService
     }
 
     private val registeredContainers = mutableMapOf<String, Startable>()
+    private val startedContainers = mutableSetOf<String>()
+
+    /** Marks a container as started in this build. Called automatically by [StartContainersTask]. */
+    internal fun markContainerStarted(name: String) = synchronized(this) { startedContainers.add(name) }
+
+    /** Returns true if the named container was started (not skipped) in this build. */
+    fun wasContainerStarted(name: String): Boolean = synchronized(this) { startedContainers.contains(name) }
 
     private val classLoader: ClassLoader by lazy {
         val urls = parameters.classpathFiles.files.map { it.toURI().toURL() }.toTypedArray()
