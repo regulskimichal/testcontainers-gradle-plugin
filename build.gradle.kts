@@ -52,14 +52,14 @@ tasks.withType<Test> {
 }
 
 // Dokka + packaging of sources and javadoc (KDoc) jars
-val dokkaHtml = tasks.named("dokkaHtml")
+val dokkaGeneratePublicationHtml = tasks.named("dokkaGeneratePublicationHtml")
 
 val javadocJar = tasks.register<Jar>("javadocJar") {
     description = "Assembles a jar archive containing the Javadoc (KDoc) API documentation."
-    dependsOn(dokkaHtml)
+    dependsOn(dokkaGeneratePublicationHtml)
     archiveClassifier.set("javadoc")
-    // Dokka generates HTML docs to build/dokka/html
-    from(layout.buildDirectory.dir("dokka/html"))
+    // Dokka V2 generates HTML docs to build/dokka/html/publication
+    from(layout.buildDirectory.dir("dokka/html/publication"))
 }
 
 val sourcesJar = tasks.register<Jar>("sourcesJar") {
