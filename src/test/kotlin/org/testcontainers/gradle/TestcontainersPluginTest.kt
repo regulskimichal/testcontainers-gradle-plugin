@@ -35,10 +35,10 @@ class TestcontainersPluginTest {
 
             testcontainers {
                 jdbcContainer("db", "postgresql") {
-                    image = "postgres:17-alpine"
-                    databaseName = "testdb"
-                    username = "testuser"
-                    password = "testpassword"
+                    image("postgres:17-alpine")
+                    databaseName("testdb")
+                    username("testuser")
+                    password("testpassword")
                 }
             }
 

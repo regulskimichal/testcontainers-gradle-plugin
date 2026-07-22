@@ -1,3 +1,4 @@
+import org.testcontainers.gradle.DatabaseType
 import org.testcontainers.gradle.getJdbcDatabaseContainer
 
 plugins {
@@ -5,11 +6,9 @@ plugins {
 }
 
 testcontainers {
-    jdbcContainer("db", "postgresql") {
-        image = "postgres:17-alpine"
-        databaseName = "demo-db"
-        username = "demo-user"
-        password = "demo-password"
+    jdbcContainer("db", DatabaseType.POSTGRESQL) {
+        image("postgres:latest")
+
     }
 }
 
@@ -20,9 +19,9 @@ dependencies {
 tasks.register("printDbInfo") {
     dependsOn("startDbContainer")
     usesService(testcontainers.service)
-    
+
     val dbProvider = testcontainers.getJdbcDatabaseContainer("db")
-    
+
     doFirst {
         val db = dbProvider.get()
         println("SUCCESSFULLY CONFIGURED POSTGRES CONTAINER!")

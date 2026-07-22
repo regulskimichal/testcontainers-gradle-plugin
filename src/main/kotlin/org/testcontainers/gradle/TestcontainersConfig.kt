@@ -11,25 +11,39 @@ open class TestcontainersConfig(
 ) {
     internal val definitions = mutableMapOf<String, ContainerDefinition>()
 
+    /**
+     * Registers a JDBC database container.
+     *
+     * @param name The unique name of the container definition.
+     * @param databaseType The string identifier of the database (e.g., "postgresql", "mysql"). See more at: https://java.testcontainers.org/modules/databases/jdbc/
+     * @param configure The configuration block for setting container properties on [JdbcContainerSpec].
+     */
     fun jdbcContainer(
         name: String,
         databaseType: String,
         configure: JdbcContainerSpec.() -> Unit
     ) {
-        val spec = JdbcContainerSpec().apply(configure)
-        spec.validate(name)
+        val defaultSub = resolveCanonicalImageName(databaseType)
+        val spec = JdbcContainerSpec(defaultSub).apply(configure)
         definitions[name] = ContainerDefinition.JdbcDatabase(
             name = name,
             databaseType = databaseType,
-            image = spec.image,
+            dockerImageName = spec.dockerImageName,
             databaseName = spec.databaseName,
             username = spec.username,
             password = spec.password,
-            compatibleSubstituteFor = spec.compatibleSubstituteFor,
             reuse = spec.reuse
         )
     }
 
+    /**
+     * Registers a JDBC database container using a type-safe [DatabaseType] enum.
+     * **Preferred** over the string-based version to prevent configuration typos.
+     *
+     * @param name The unique name of the container definition.
+     * @param databaseType The supported [DatabaseType] enum (e.g., [DatabaseType.POSTGRESQL]).
+     * @param configure The configuration block for setting container properties on [JdbcContainerSpec].
+     */
     fun jdbcContainer(
         name: String,
         databaseType: DatabaseType,
@@ -38,9 +52,14 @@ open class TestcontainersConfig(
         jdbcContainer(name, databaseType.id, configure)
     }
 
+    /**
+     * Registers a generic single-container definition.
+     *
+     * @param name The unique name of the container definition.
+     * @param configure The configuration block for setting generic container properties on [GenericContainerSpec].
+     */
     fun genericContainer(name: String, configure: GenericContainerSpec.() -> Unit) {
         val spec = GenericContainerSpec().apply(configure)
-        spec.validate(name)
         val resolvedMounts = spec.volumeMounts.map { mountSpec ->
             val hostPath = mountSpec.hostPath
             val hostAbsolutePath = when (hostPath) {
@@ -60,9 +79,10 @@ open class TestcontainersConfig(
                 readOnly = mountSpec.readOnly
             )
         }
+        spec.validate()
         definitions[name] = ContainerDefinition.Generic(
             name = name,
-            image = spec.image,
+            dockerImageName = requireNotNull(spec.dockerImageName),
             exposedPorts = spec.exposedPorts,
             env = spec.env,
             reuse = spec.reuse,
@@ -82,6 +102,13 @@ open class TestcontainersConfig(
         )
     }
 
+    /**
+     * Registers a Docker Compose multi-container setup.
+     *
+     * @param name The unique name of the compose stack definition.
+     * @param filePath The path to the Docker Compose configuration file (can be a [File], path string, etc.).
+     * @param configure The configuration block for exposing compose services on [ComposeContainerSpec].
+     */
     fun composeContainer(
         name: String,
         filePath: Any,
