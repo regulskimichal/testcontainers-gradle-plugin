@@ -1,5 +1,7 @@
 package org.testcontainers.gradle.spec
 
+import java.time.Duration
+
 /**
  * Configuration specification for Docker Compose multi-container stacks.
  *
@@ -56,7 +58,7 @@ class ComposeContainerSpec {
      */
     val exposedServices: Map<String, List<Int>> get() = _exposedServices
 
-    internal var startupTimeoutSeconds: Long = 60
+    internal var startupTimeoutSeconds: Long = Duration.ofMinutes(1).seconds
 
     /**
      * Declares a service to expose from the Docker Compose stack.
