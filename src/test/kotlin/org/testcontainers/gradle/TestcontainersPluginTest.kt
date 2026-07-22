@@ -5,12 +5,11 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.testcontainers.DockerClientFactory
 import java.io.File
 
+@RequiresDocker
 class TestcontainersPluginTest {
 
     @TempDir
@@ -19,18 +18,16 @@ class TestcontainersPluginTest {
     @Test
     fun `plugin starts database container lazily on demand`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-project\""
+        val settingsKts = """rootProject.name = "test-project""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
-        val kts = """
+        val kts = $$"""
             import org.testcontainers.containers.JdbcDatabaseContainer
             import org.testcontainers.gradle.getContainer
 
@@ -63,9 +60,9 @@ class TestcontainersPluginTest {
                     val url = db.jdbcUrl
                     val user = db.username
                     val password = db.password
-                    println("TESTCONTAINERS_JDBC_URL=" + url)
-                    println("TESTCONTAINERS_USER=" + user)
-                    println("TESTCONTAINERS_PASSWORD=" + password)
+                    println("TESTCONTAINERS_JDBC_URL=$url")
+                    println("TESTCONTAINERS_USER=$user")
+                    println("TESTCONTAINERS_PASSWORD=$password")
                 }
             }
         """.trimIndent()
@@ -79,7 +76,6 @@ class TestcontainersPluginTest {
             .build()
 
         val output = result.output
-        println(output)
 
         // Then
         val task = result.task(":testTask")
@@ -93,16 +89,14 @@ class TestcontainersPluginTest {
     @Test
     fun `plugin starts compose services dynamically`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-compose-project\""
+        val settingsKts = """rootProject.name = "test-compose-project""""
         settingsFile.writeText(settingsKts)
 
         val composeFile = File(testProjectDir, "compose.yaml")
+
         @Language("yaml")
         val yaml = """
             services:
@@ -120,8 +114,9 @@ class TestcontainersPluginTest {
         composeFile.writeText(yaml)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
-        val kts = """
+        val kts = $$"""
             import org.testcontainers.containers.ComposeContainer
             import org.testcontainers.gradle.getContainer
 
@@ -146,10 +141,10 @@ class TestcontainersPluginTest {
                     val cacheHost = container.getServiceHost("cache", 6379)
                     val cachePort = container.getServicePort("cache", 6379)
                     
-                    println("COMPOSE_WEB_HOST=" + webHost)
-                    println("COMPOSE_WEB_PORT=" + webPort)
-                    println("COMPOSE_CACHE_HOST=" + cacheHost)
-                    println("COMPOSE_CACHE_PORT=" + cachePort)
+                    println("COMPOSE_WEB_HOST=$webHost")
+                    println("COMPOSE_WEB_PORT=$webPort")
+                    println("COMPOSE_CACHE_HOST=$cacheHost")
+                    println("COMPOSE_CACHE_PORT=$cachePort")
                 }
             }
         """.trimIndent()
@@ -163,7 +158,6 @@ class TestcontainersPluginTest {
             .build()
 
         val output = result.output
-        println(output)
 
         // Then
         val task = result.task(":testTask")
@@ -178,16 +172,14 @@ class TestcontainersPluginTest {
     @Test
     fun `plugin supports configuration cache`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-config-cache\""
+        val settingsKts = """rootProject.name = "test-config-cache""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
         val kts = """
             plugins {
@@ -231,16 +223,14 @@ class TestcontainersPluginTest {
     @Test
     fun `plugin supports project isolation`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-project-isolation\""
+        val settingsKts = """rootProject.name = "test-project-isolation""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
         val kts = """
             plugins {
@@ -277,11 +267,8 @@ class TestcontainersPluginTest {
     @Test
     fun `plugin shares container instance in multi project build`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
         val settingsKts = """
             rootProject.name = "multi-project"
@@ -290,6 +277,7 @@ class TestcontainersPluginTest {
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
         val kts = """
             plugins {
@@ -318,6 +306,7 @@ class TestcontainersPluginTest {
 
         val appDir = File(testProjectDir, "app").apply { mkdirs() }
         val appBuildFile = File(appDir, "build.gradle.kts")
+
         @Language("kotlin")
         val appKts = """
             import org.testcontainers.containers.JdbcDatabaseContainer
@@ -336,6 +325,7 @@ class TestcontainersPluginTest {
 
         val coreDir = File(testProjectDir, "core").apply { mkdirs() }
         val coreBuildFile = File(coreDir, "build.gradle.kts")
+
         @Language("kotlin")
         val coreKts = """
             import org.testcontainers.containers.JdbcDatabaseContainer
@@ -360,7 +350,6 @@ class TestcontainersPluginTest {
             .build()
 
         val output = result.output
-        println(output)
 
         // Then
         val appPortRegex = Regex("APP_DB_PORT=(\\d+)")
@@ -380,13 +369,10 @@ class TestcontainersPluginTest {
     @Test
     fun `generic container supports wait strategy and volume mount`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-volume-mount\""
+        val settingsKts = """rootProject.name = "test-volume-mount""""
         settingsFile.writeText(settingsKts)
 
         val htmlDir = File(testProjectDir, "html").apply { mkdirs() }
@@ -395,8 +381,9 @@ class TestcontainersPluginTest {
         indexHtmlFile.writeText(uniqueContent)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
-        val kts = """
+        val kts = $$"""
             import org.testcontainers.containers.GenericContainer
             import org.testcontainers.gradle.getContainer
             import org.testcontainers.containers.wait.strategy.Wait
@@ -410,7 +397,7 @@ class TestcontainersPluginTest {
                 genericContainer("web") {
                     image("nginx:alpine")
                     exposedPorts(80)
-                    mountVolume("${htmlDir.absolutePath.replace("\\", "/")}", "/usr/share/nginx/html", true)
+                    mountVolume("$${htmlDir.absolutePath.replace("""\""", "/")}", "/usr/share/nginx/html", true)
                     waitHttp("/")
                 }
             }
@@ -422,7 +409,7 @@ class TestcontainersPluginTest {
                     val web = testcontainers.getContainer<GenericContainer<*>>("web").get()
                     val host = web.host
                     val port = web.firstMappedPort
-                    val url = URL("http://" + host + ":" + port + "/")
+                    val url = URL("http://$host:$port/")
                     val content = url.readText()
                     println("WEB_CONTENT=" + content.trim())
                 }
@@ -438,7 +425,6 @@ class TestcontainersPluginTest {
             .build()
 
         val output = result.output
-        println(output)
 
         // Then
         assertTrue(output.contains("WEB_CONTENT=$uniqueContent"))
@@ -447,21 +433,19 @@ class TestcontainersPluginTest {
     @Test
     fun `start and stop tasks lifecycle with finalizedBy`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-lifecycle-failure\""
+        val settingsKts = """rootProject.name = "test-lifecycle-failure""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
         val kts = """
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
             testcontainers {
                 genericContainer("nginx") {
@@ -488,7 +472,6 @@ class TestcontainersPluginTest {
             .buildAndFail()
 
         val output = result.output
-        println(output)
 
         // Then
         val startTask = result.task(":startNginxContainer")
@@ -505,24 +488,22 @@ class TestcontainersPluginTest {
     @Test
     fun `jdbc database supports compatible image substitute`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-jdbc-substitute\""
+        val settingsKts = """rootProject.name = "test-jdbc-substitute""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
         val kts = """
             import org.testcontainers.containers.JdbcDatabaseContainer
             import org.testcontainers.gradle.getContainer
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+                    plugins {
+                        id("io.github.regulskimichal.testcontainers")
+                    }
 
             testcontainers {
                 jdbcContainer("db", "postgresql") {
@@ -561,7 +542,6 @@ class TestcontainersPluginTest {
             .build()
 
         val output = result.output
-        println(output)
 
         // Then
         assertTrue(output.contains("RESOLVED_IMAGE=postgis/postgis:15-3.3-alpine"))
@@ -571,24 +551,22 @@ class TestcontainersPluginTest {
     @Test
     fun `generic container supports custom compatible image substitute`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-custom-generic-substitute\""
+        val settingsKts = """rootProject.name = "test-custom-generic-substitute""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
         val kts = """
             import org.testcontainers.containers.GenericContainer
             import org.testcontainers.gradle.getContainer
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+                    plugins {
+                        id("io.github.regulskimichal.testcontainers")
+                    }
 
             testcontainers {
                 genericContainer("redis") {
@@ -616,7 +594,6 @@ class TestcontainersPluginTest {
             .build()
 
         val output = result.output
-        println(output)
 
         // Then
         assertTrue(output.contains("RESOLVED_IMAGE=redis:7-alpine"))
@@ -625,21 +602,19 @@ class TestcontainersPluginTest {
     @Test
     fun `compose container fails at startup when compose file is missing`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-missing-compose\""
+        val settingsKts = """rootProject.name = "test-missing-compose""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
         val kts = """
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
             testcontainers {
                 composeContainer("my-stack", "non-existent-compose.yaml") {
@@ -657,7 +632,6 @@ class TestcontainersPluginTest {
             .buildAndFail()
 
         val output = result.output
-        println(output)
 
         // Then
         assertTrue(output.contains("Unable to parse YAML file") || output.contains("non-existent-compose.yaml"))
@@ -666,24 +640,22 @@ class TestcontainersPluginTest {
     @Test
     fun `accessor throws ClassCastException when retrieved with wrong container type`() {
         // Given
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable) {
-            "Docker is not available, skipping integration test"
-        }
-
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
+
         @Language("kotlin")
-        val settingsKts = "rootProject.name = \"test-wrong-accessor\""
+        val settingsKts = """rootProject.name = "test-wrong-accessor""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
+
         @Language("kotlin")
-        val kts = """
+        val kts = $$"""
             import org.testcontainers.containers.JdbcDatabaseContainer
             import org.testcontainers.gradle.getContainer
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+                    plugins {
+                        id("io.github.regulskimichal.testcontainers")
+                    }
 
             testcontainers {
                 genericContainer("web") {
@@ -696,7 +668,7 @@ class TestcontainersPluginTest {
                 usesService(testcontainers.service)
                 doLast {
                     val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("web").get()
-                    println("RESOLVED_DB=" + db)
+                    println("RESOLVED_DB=$db")
                 }
             }
         """.trimIndent()
@@ -710,7 +682,6 @@ class TestcontainersPluginTest {
             .buildAndFail()
 
         val output = result.output
-        println(output)
 
         // Then
         assertTrue(output.contains("ClassCastException") || output.contains("cannot be cast to"))

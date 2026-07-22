@@ -2,7 +2,6 @@ package org.testcontainers.gradle
 
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.Test
-import org.testcontainers.shaded.org.bouncycastle.cms.RecipientId.password
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -40,7 +39,7 @@ class TestcontainersPluginUnitTest {
         // Verify task definitions match our config
         val startDefinitions = startTask.containerDefinitions.get()
         assertEquals(1, startDefinitions.size)
-        
+
         val postgresDef = startDefinitions[0] as ContainerDefinition.JdbcDatabase
         assertEquals("postgresdb", postgresDef.name)
         assertNotNull(postgresDef.dockerImageName)
@@ -128,7 +127,10 @@ class TestcontainersPluginUnitTest {
                 // no service() called
             }
         }
-        assertEquals("Container 'invalid-compose' error: at least one service must be exposed via service().", exception.message)
+        assertEquals(
+            "Container 'invalid-compose' error: at least one service must be exposed via service().",
+            exception.message
+        )
     }
 
     @Test
@@ -142,5 +144,24 @@ class TestcontainersPluginUnitTest {
             extension.getContainer<org.testcontainers.containers.JdbcDatabaseContainer<*>>("non-existent")
         }
         assertEquals("No container registered with name 'non-existent'.", exception.message)
+    }
+
+    @Test
+    fun `resolveCanonicalImageName resolves all DatabaseType enums and aliases correctly`() {
+        // Test all enum entries resolve to their canonical image names
+        DatabaseType.entries.forEach { dbType ->
+            assertEquals(dbType.canonicalImageName, resolveCanonicalImageName(dbType.id))
+            assertEquals(dbType.canonicalImageName, resolveCanonicalImageName(dbType.name))
+        }
+
+        // Test common aliases and partial strings
+        assertEquals("postgres", resolveCanonicalImageName("postgres"))
+        assertEquals("mcr.microsoft.com/mssql/server", resolveCanonicalImageName("mssql"))
+        assertEquals("mcr.microsoft.com/mssql/server", resolveCanonicalImageName("sqlserver"))
+        assertEquals("postgis/postgis", resolveCanonicalImageName("my-postgis-db"))
+        assertEquals("timescale/timescaledb", resolveCanonicalImageName("timescale"))
+
+        // Test invalid/unknown database type
+        kotlin.test.assertNull(resolveCanonicalImageName("unknown-db"))
     }
 }

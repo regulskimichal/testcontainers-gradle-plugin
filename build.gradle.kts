@@ -2,8 +2,15 @@ plugins {
     `kotlin-dsl`
     `java-gradle-plugin`
     `maven-publish`
-    id("com.gradle.plugin-publish") version "1.2.1"
-    id("org.jetbrains.dokka") version "2.2.0"
+    alias(libs.plugins.gradle.pluginPublish)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.detekt)
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom("config/detekt/detekt.yml")
 }
 
 group = "io.github.regulskimichal"
@@ -22,7 +29,8 @@ gradlePlugin {
         create("testcontainers") {
             id = "io.github.regulskimichal.testcontainers"
             displayName = "Testcontainers Gradle Plugin"
-            description = "A minimal, framework-agnostic Gradle plugin that manages container lifecycles for build-time tasks (such as code generation, database migrations, schema inspection, etc.) using Testcontainers."
+            description =
+                "A minimal, framework-agnostic Gradle plugin that manages container lifecycles for build-time tasks (such as code generation, database migrations, schema inspection, etc.) using Testcontainers."
             tags.set(listOf("testcontainers", "docker", "compose", "containers", "jdbc", "database", "migration"))
             implementationClass = "org.testcontainers.gradle.TestcontainersPlugin"
         }

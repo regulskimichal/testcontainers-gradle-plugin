@@ -162,7 +162,9 @@ abstract class TestcontainersBuildService
     private fun createGenericContainer(containerDefinition: ContainerDefinition.Generic): GenericContainer<*> {
         val container = GenericContainer(containerDefinition.dockerImageName.toDockerImageName())
         if (containerDefinition.exposedPorts.isNotEmpty()) {
-            container.withExposedPorts(*containerDefinition.exposedPorts.toTypedArray())
+            containerDefinition.exposedPorts.forEach { port ->
+                container.withExposedPorts(port)
+            }
         }
         if (containerDefinition.env.isNotEmpty()) {
             container.withEnv(containerDefinition.env)

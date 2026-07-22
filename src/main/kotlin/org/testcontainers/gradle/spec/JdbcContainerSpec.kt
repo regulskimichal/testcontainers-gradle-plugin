@@ -1,6 +1,7 @@
 package org.testcontainers.gradle.spec
 
 import org.testcontainers.gradle.SerializableDockerImageName
+import java.io.Serial
 import java.io.Serializable
 
 /**
@@ -146,5 +147,10 @@ class JdbcContainerSpec(internal val defaultCompatibleSubstitute: String? = null
     data class PortMappingSpec(
         val hostPort: Int,
         val containerPort: Int
-    ) : Serializable
+    ) : Serializable {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 8308928897799310828L
+        }
+    }
 }

@@ -1,7 +1,9 @@
 package org.testcontainers.gradle.spec
 
 import org.testcontainers.gradle.SerializableDockerImageName
+import java.io.Serial
 import java.io.Serializable
+import java.time.Duration
 
 /**
  * Configuration specification for generic Docker containers.
@@ -43,12 +45,13 @@ import java.io.Serializable
  * @see org.testcontainers.gradle.TestcontainersConfig.genericContainer for registration
  * @see WaitStrategySpec for container readiness detection
  */
+@Suppress("TooManyFunctions")
 class GenericContainerSpec {
     internal var dockerImageName: SerializableDockerImageName? = null
     internal var exposedPorts: List<Int> = emptyList()
     internal var env: Map<String, String> = emptyMap()
     internal var reuse: Boolean = false
-    internal var startupTimeoutSeconds: Long = 60
+    internal var startupTimeoutSeconds: Long = Duration.ofMinutes(1).seconds
     internal var waitStrategy: WaitStrategySpec = WaitStrategySpec.ListeningPort
     internal val volumeMounts = mutableListOf<VolumeMountSpec>()
 
@@ -267,7 +270,12 @@ class GenericContainerSpec {
         val hostPath: Any,
         val containerPath: String,
         val readOnly: Boolean
-    ) : Serializable
+    ) : Serializable {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -5972957836880529540L
+        }
+    }
 
     /**
      * Wait strategy for detecting when a generic container is ready.
@@ -283,7 +291,10 @@ class GenericContainerSpec {
      */
     sealed interface WaitStrategySpec : Serializable {
         /** Wait for exposed ports to start listening for TCP connections. */
-        object ListeningPort : WaitStrategySpec
+        object ListeningPort : WaitStrategySpec {
+            @Serial
+            private const val serialVersionUID: Long = -5733784761358270496L
+        }
 
         /**
          * Wait for an HTTP endpoint to respond with a specific status code.
@@ -291,7 +302,12 @@ class GenericContainerSpec {
          * @param path The HTTP path to probe
          * @param statusCode The expected HTTP status code
          */
-        data class Http(val path: String, val statusCode: Int) : WaitStrategySpec
+        data class Http(val path: String, val statusCode: Int) : WaitStrategySpec {
+            companion object {
+                @Serial
+                private const val serialVersionUID: Long = 7124312244984591410L
+            }
+        }
 
         /**
          * Wait for a log message matching a regex pattern.
@@ -299,7 +315,12 @@ class GenericContainerSpec {
          * @param regex The regex pattern to match in logs
          * @param times The number of occurrences needed to consider the container ready
          */
-        data class LogMessage(val regex: String, val times: Int) : WaitStrategySpec
+        data class LogMessage(val regex: String, val times: Int) : WaitStrategySpec {
+            companion object {
+                @Serial
+                private const val serialVersionUID: Long = -5631894294024599878L
+            }
+        }
     }
 
     internal fun validate() {

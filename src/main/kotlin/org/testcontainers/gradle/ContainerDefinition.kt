@@ -1,6 +1,7 @@
 package org.testcontainers.gradle
 
 import org.testcontainers.utility.DockerImageName
+import java.io.Serial
 import java.io.Serializable
 
 /**
@@ -33,7 +34,10 @@ sealed class ContainerDefinition : Serializable {
      */
     sealed class WaitStrategy : Serializable {
         /** Wait for exposed ports to start listening for TCP connections. */
-        object ListeningPort : WaitStrategy()
+        object ListeningPort : WaitStrategy() {
+            @Serial
+            private const val serialVersionUID: Long = 8051104056948544114L
+        }
 
         /**
          * Wait for an HTTP endpoint to respond.
@@ -41,7 +45,12 @@ sealed class ContainerDefinition : Serializable {
          * @param path The HTTP path to probe (e.g., "/health", "/actuator/health")
          * @param statusCode The expected HTTP status code (default 200)
          */
-        data class Http(val path: String, val statusCode: Int) : WaitStrategy()
+        data class Http(val path: String, val statusCode: Int) : WaitStrategy() {
+            companion object {
+                @Serial
+                private const val serialVersionUID: Long = 4249900795560152804L
+            }
+        }
 
         /**
          * Wait for a log message matching a regex pattern.
@@ -49,7 +58,17 @@ sealed class ContainerDefinition : Serializable {
          * @param regex The regex pattern to match in container logs
          * @param times The number of times the pattern must appear before considering the container ready
          */
-        data class LogMessage(val regex: String, val times: Int) : WaitStrategy()
+        data class LogMessage(val regex: String, val times: Int) : WaitStrategy() {
+            companion object {
+                @Serial
+                private const val serialVersionUID: Long = 8713384407870223556L
+            }
+        }
+
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -1836453596581705910L
+        }
     }
 
     /**
@@ -61,7 +80,12 @@ sealed class ContainerDefinition : Serializable {
     data class PortMapping(
         val hostPort: Int,
         val containerPort: Int
-    ) : Serializable
+    ) : Serializable {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 7294809365842840308L
+        }
+    }
 
     /**
      * JDBC database container definition.
@@ -84,7 +108,12 @@ sealed class ContainerDefinition : Serializable {
         val password: String?,
         val reuse: Boolean = false,
         val portMappings: List<PortMapping> = emptyList()
-    ) : ContainerDefinition()
+    ) : ContainerDefinition() {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -8432040085634158273L
+        }
+    }
 
     /**
      * Volume mount binding a host path to a container path.
@@ -97,7 +126,12 @@ sealed class ContainerDefinition : Serializable {
         val hostPath: String,
         val containerPath: String,
         val readOnly: Boolean
-    ) : Serializable
+    ) : Serializable {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 8746998764599472554L
+        }
+    }
 
     /**
      * Generic Docker container definition.
@@ -120,7 +154,12 @@ sealed class ContainerDefinition : Serializable {
         val waitStrategy: WaitStrategy = WaitStrategy.ListeningPort,
         val startupTimeoutSeconds: Long = 60,
         val volumeMounts: List<VolumeMount> = emptyList()
-    ) : ContainerDefinition()
+    ) : ContainerDefinition() {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = 8813209377780308846L
+        }
+    }
 
     /**
      * Docker Compose stack definition.
@@ -135,7 +174,17 @@ sealed class ContainerDefinition : Serializable {
         val composeFilePath: String,
         val exposedServices: Map<String, List<Int>>, // serviceName -> list of ports
         val startupTimeoutSeconds: Long
-    ) : ContainerDefinition()
+    ) : ContainerDefinition() {
+        companion object {
+            @Serial
+            private const val serialVersionUID: Long = -378979055865126054L
+        }
+    }
+
+    companion object {
+        @Serial
+        private const val serialVersionUID: Long = -6152446509977392623L
+    }
 }
 
 /**
@@ -162,5 +211,10 @@ class SerializableDockerImageName(
         } else {
             parsed
         }
+    }
+
+    companion object {
+        @Serial
+        private const val serialVersionUID: Long = -7586492537001558457L
     }
 }

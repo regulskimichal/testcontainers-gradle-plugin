@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release:
-    name: Build & Publish Release
+    name: Create GitHub Release
     runs-on: ubuntu-latest
 
     steps:
@@ -38,19 +38,9 @@ jobs:
       - name: Build Release Artifacts
         run: |
           chmod +x gradlew
-          ./gradlew build "-Pversion=${{ steps.get_version.outputs.version }}"
-
-      - name: Publish to Gradle Plugin Portal (Optional)
-        if: github.actor != 'nektos/act' && env.GRADLE_PUBLISH_KEY != '' && env.GRADLE_PUBLISH_SECRET != ''
-        env:
-          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
-          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
-        run: |
-          chmod +x gradlew
-          ./gradlew publishPlugins "-Pversion=${{ steps.get_version.outputs.version }}" --no-configuration-cache
+          ./gradlew build sourcesJar javadocJar "-Pversion=${{ steps.get_version.outputs.version }}"
 
       - name: Create GitHub Release
-        if: github.actor != 'nektos/act'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_version.outputs.tag }}
@@ -60,4 +50,3 @@ jobs:
           files: |
             build/libs/*.jar
           generate_release_notes: true
-

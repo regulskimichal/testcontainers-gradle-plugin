@@ -1,7 +1,10 @@
 [versions]
 testcontainers = "2.0.5"
 kotlin = "2.4.0"
-junit = "5.11.0"
+junit = "6.1.2"
+pluginPublish = "1.2.1"
+dokka = "2.2.0"
+detekt = "1.23.8"
 
 [libraries]
 testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
@@ -9,3 +12,8 @@ testcontainers-core = { group = "org.testcontainers", name = "testcontainers" }
 testcontainers-jdbc = { group = "org.testcontainers", name = "testcontainers-jdbc" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 kotlin-test-junit5 = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit5", version.ref = "kotlin" }
+
+[plugins]
+gradle-pluginPublish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublish" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

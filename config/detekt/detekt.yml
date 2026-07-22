@@ -1,0 +1,10 @@
+complexity:
+  TooManyFunctions:
+    active: false
+    ignorePrivate: true
+  LongMethod:
+    excludes: ['**/test/**']
+
+style:
+  MaxLineLength:
+    active: false
