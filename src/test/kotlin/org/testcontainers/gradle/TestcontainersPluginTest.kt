@@ -19,15 +19,11 @@ class TestcontainersPluginTest {
     fun `plugin starts database container lazily on demand`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-project""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-project""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = $$"""
+        @Language("kotlin") val kts = $$"""
             import org.testcontainers.containers.JdbcDatabaseContainer
             import org.testcontainers.gradle.getContainer
 
@@ -75,30 +71,24 @@ class TestcontainersPluginTest {
             .withArguments("testTask")
             .build()
 
-        val output = result.output
-
         // Then
         val task = result.task(":testTask")
         assertEquals(TaskOutcome.SUCCESS, task?.outcome)
 
-        assertTrue(output.contains("TESTCONTAINERS_JDBC_URL=jdbc:postgresql://"))
-        assertTrue(output.contains("TESTCONTAINERS_USER=testuser"))
-        assertTrue(output.contains("TESTCONTAINERS_PASSWORD=testpassword"))
+        assertTrue(result.output.contains("TESTCONTAINERS_JDBC_URL=jdbc:postgresql://"))
+        assertTrue(result.output.contains("TESTCONTAINERS_USER=testuser"))
+        assertTrue(result.output.contains("TESTCONTAINERS_PASSWORD=testpassword"))
     }
 
     @Test
     fun `plugin starts compose services dynamically`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-compose-project""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-compose-project""""
         settingsFile.writeText(settingsKts)
 
         val composeFile = File(testProjectDir, "compose.yaml")
-
-        @Language("yaml")
-        val yaml = """
+        @Language("yaml") val yaml = """
             services:
               web:
                 image: alpine:3.18
@@ -114,9 +104,7 @@ class TestcontainersPluginTest {
         composeFile.writeText(yaml)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = $$"""
+        @Language("kotlin") val kts = $$"""
             import org.testcontainers.containers.ComposeContainer
             import org.testcontainers.gradle.getContainer
 
@@ -157,31 +145,25 @@ class TestcontainersPluginTest {
             .withArguments("testTask")
             .build()
 
-        val output = result.output
-
         // Then
         val task = result.task(":testTask")
         assertEquals(TaskOutcome.SUCCESS, task?.outcome)
 
-        assertTrue(output.contains("COMPOSE_WEB_HOST="))
-        assertTrue(output.contains("COMPOSE_WEB_PORT="))
-        assertTrue(output.contains("COMPOSE_CACHE_HOST="))
-        assertTrue(output.contains("COMPOSE_CACHE_PORT="))
+        assertTrue(result.output.contains("COMPOSE_WEB_HOST="))
+        assertTrue(result.output.contains("COMPOSE_WEB_PORT="))
+        assertTrue(result.output.contains("COMPOSE_CACHE_HOST="))
+        assertTrue(result.output.contains("COMPOSE_CACHE_PORT="))
     }
 
     @Test
     fun `plugin supports configuration cache`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-config-cache""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-config-cache""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = """
+        @Language("kotlin") val kts = """
             plugins {
                 id("io.github.regulskimichal.testcontainers")
             }
@@ -224,15 +206,11 @@ class TestcontainersPluginTest {
     fun `plugin supports project isolation`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-project-isolation""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-project-isolation""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = """
+        @Language("kotlin") val kts = """
             plugins {
                 id("io.github.regulskimichal.testcontainers")
             }
@@ -268,18 +246,14 @@ class TestcontainersPluginTest {
     fun `plugin shares container instance in multi project build`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """
+        @Language("kotlin") val settingsKts = """
             rootProject.name = "multi-project"
             include("app", "core")
         """.trimIndent()
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = """
+        @Language("kotlin") val kts = """
             plugins {
                 id("io.github.regulskimichal.testcontainers") apply false
             }
@@ -306,9 +280,7 @@ class TestcontainersPluginTest {
 
         val appDir = File(testProjectDir, "app").apply { mkdirs() }
         val appBuildFile = File(appDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val appKts = """
+        @Language("kotlin") val appKts = $$"""
             import org.testcontainers.containers.JdbcDatabaseContainer
             import org.testcontainers.gradle.getContainer
 
@@ -317,7 +289,7 @@ class TestcontainersPluginTest {
                 usesService(testcontainers.service)
                 doLast {
                     val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
-                    println("APP_DB_PORT=" + db.firstMappedPort)
+                    println("APP_DB_PORT=${db.firstMappedPort}")
                 }
             }
         """.trimIndent()
@@ -325,9 +297,7 @@ class TestcontainersPluginTest {
 
         val coreDir = File(testProjectDir, "core").apply { mkdirs() }
         val coreBuildFile = File(coreDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val coreKts = """
+        @Language("kotlin") val coreKts = $$"""
             import org.testcontainers.containers.JdbcDatabaseContainer
             import org.testcontainers.gradle.getContainer
 
@@ -336,7 +306,7 @@ class TestcontainersPluginTest {
                 usesService(testcontainers.service)
                 doLast {
                     val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
-                    println("CORE_DB_PORT=" + db.firstMappedPort)
+                    println("CORE_DB_PORT=${db.firstMappedPort}")
                 }
             }
         """.trimIndent()
@@ -349,14 +319,12 @@ class TestcontainersPluginTest {
             .withArguments(":app:printAppDb", ":core:printCoreDb")
             .build()
 
-        val output = result.output
-
         // Then
         val appPortRegex = Regex("APP_DB_PORT=(\\d+)")
         val corePortRegex = Regex("CORE_DB_PORT=(\\d+)")
 
-        val appPortMatch = appPortRegex.find(output)
-        val corePortMatch = corePortRegex.find(output)
+        val appPortMatch = appPortRegex.find(result.output)
+        val corePortMatch = corePortRegex.find(result.output)
 
         val appPort = appPortMatch?.groupValues?.get(1)
         val corePort = corePortMatch?.groupValues?.get(1)
@@ -370,20 +338,16 @@ class TestcontainersPluginTest {
     fun `generic container supports wait strategy and volume mount`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-volume-mount""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-volume-mount""""
         settingsFile.writeText(settingsKts)
 
         val htmlDir = File(testProjectDir, "html").apply { mkdirs() }
         val indexHtmlFile = File(htmlDir, "index.html")
-        val uniqueContent = "Unique HTML content: " + java.util.UUID.randomUUID().toString()
+        val uniqueContent = "Unique HTML content: ${java.util.UUID.randomUUID()}"
         indexHtmlFile.writeText(uniqueContent)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = $$"""
+        @Language("kotlin") val kts = $$"""
             import org.testcontainers.containers.GenericContainer
             import org.testcontainers.gradle.getContainer
             import org.testcontainers.containers.wait.strategy.Wait
@@ -411,7 +375,7 @@ class TestcontainersPluginTest {
                     val port = web.firstMappedPort
                     val url = URL("http://$host:$port/")
                     val content = url.readText()
-                    println("WEB_CONTENT=" + content.trim())
+                    println("WEB_CONTENT=${content.trim()}")
                 }
             }
         """.trimIndent()
@@ -424,25 +388,19 @@ class TestcontainersPluginTest {
             .withArguments("testWeb")
             .build()
 
-        val output = result.output
-
         // Then
-        assertTrue(output.contains("WEB_CONTENT=$uniqueContent"))
+        assertTrue(result.output.contains("WEB_CONTENT=$uniqueContent"))
     }
 
     @Test
     fun `start and stop tasks lifecycle with finalizedBy`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-lifecycle-failure""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-lifecycle-failure""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = """
+        @Language("kotlin") val kts = """
         plugins {
             id("io.github.regulskimichal.testcontainers")
         }
@@ -471,8 +429,6 @@ class TestcontainersPluginTest {
             .withArguments("failingTask")
             .buildAndFail()
 
-        val output = result.output
-
         // Then
         val startTask = result.task(":startNginxContainer")
         val failingTask = result.task(":failingTask")
@@ -482,28 +438,24 @@ class TestcontainersPluginTest {
         assertEquals(TaskOutcome.FAILED, failingTask?.outcome)
         assertEquals(TaskOutcome.SUCCESS, stopTask?.outcome)
 
-        assertTrue(output.contains("Stopping container: nginx"))
+        assertTrue(result.output.contains("Stopping container: nginx"))
     }
 
     @Test
     fun `jdbc database supports compatible image substitute`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-jdbc-substitute""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-jdbc-substitute""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = """
+        @Language("kotlin") val kts = $$"""
             import org.testcontainers.containers.JdbcDatabaseContainer
             import org.testcontainers.gradle.getContainer
 
-                    plugins {
-                        id("io.github.regulskimichal.testcontainers")
-                    }
+            plugins {
+                id("io.github.regulskimichal.testcontainers")
+            }
 
             testcontainers {
                 jdbcContainer("db", "postgresql") {
@@ -527,8 +479,8 @@ class TestcontainersPluginTest {
                 usesService(testcontainers.service)
                 doLast {
                     val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
-                    println("RESOLVED_IMAGE=" + db.dockerImageName)
-                    println("DB_URL=" + db.jdbcUrl)
+                    println("RESOLVED_IMAGE=${db.dockerImageName}")
+                    println("DB_URL=${db.jdbcUrl}")
                 }
             }
         """.trimIndent()
@@ -541,32 +493,26 @@ class TestcontainersPluginTest {
             .withArguments("testTask")
             .build()
 
-        val output = result.output
-
         // Then
-        assertTrue(output.contains("RESOLVED_IMAGE=postgis/postgis:15-3.3-alpine"))
-        assertTrue(output.contains("DB_URL=jdbc:postgresql://"))
+        assertTrue(result.output.contains("RESOLVED_IMAGE=postgis/postgis:15-3.3-alpine"))
+        assertTrue(result.output.contains("DB_URL=jdbc:postgresql://"))
     }
 
     @Test
     fun `generic container supports custom compatible image substitute`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-custom-generic-substitute""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-custom-generic-substitute""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = """
+        @Language("kotlin") val kts = $$"""
             import org.testcontainers.containers.GenericContainer
             import org.testcontainers.gradle.getContainer
 
-                    plugins {
-                        id("io.github.regulskimichal.testcontainers")
-                    }
+            plugins {
+                id("io.github.regulskimichal.testcontainers")
+            }
 
             testcontainers {
                 genericContainer("redis") {
@@ -580,7 +526,7 @@ class TestcontainersPluginTest {
                 usesService(testcontainers.service)
                 doLast {
                     val redis = testcontainers.getContainer<GenericContainer<*>>("redis").get()
-                    println("RESOLVED_IMAGE=" + redis.dockerImageName)
+                    println("RESOLVED_IMAGE=${redis.dockerImageName}")
                 }
             }
         """.trimIndent()
@@ -593,10 +539,8 @@ class TestcontainersPluginTest {
             .withArguments("testTask")
             .build()
 
-        val output = result.output
-
         // Then
-        assertTrue(output.contains("RESOLVED_IMAGE=redis:7-alpine"))
+        assertTrue(result.output.contains("RESOLVED_IMAGE=redis:7-alpine"))
     }
 
     @Test
@@ -604,17 +548,15 @@ class TestcontainersPluginTest {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
 
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-missing-compose""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-missing-compose""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
 
-        @Language("kotlin")
-        val kts = """
-        plugins {
-            id("io.github.regulskimichal.testcontainers")
-        }
+        @Language("kotlin") val kts = """
+            plugins {
+                id("io.github.regulskimichal.testcontainers")
+            }
 
             testcontainers {
                 composeContainer("my-stack", "non-existent-compose.yaml") {
@@ -631,31 +573,25 @@ class TestcontainersPluginTest {
             .withArguments("startMyStackContainer")
             .buildAndFail()
 
-        val output = result.output
-
         // Then
-        assertTrue(output.contains("Unable to parse YAML file") || output.contains("non-existent-compose.yaml"))
+        assertTrue(result.output.contains("Unable to parse YAML file") || result.output.contains("non-existent-compose.yaml"))
     }
 
     @Test
     fun `accessor throws ClassCastException when retrieved with wrong container type`() {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
-
-        @Language("kotlin")
-        val settingsKts = """rootProject.name = "test-wrong-accessor""""
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-wrong-accessor""""
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        @Language("kotlin")
-        val kts = $$"""
+        @Language("kotlin") val kts = $$"""
             import org.testcontainers.containers.JdbcDatabaseContainer
             import org.testcontainers.gradle.getContainer
 
-                    plugins {
-                        id("io.github.regulskimichal.testcontainers")
-                    }
+            plugins {
+                id("io.github.regulskimichal.testcontainers")
+            }
 
             testcontainers {
                 genericContainer("web") {
@@ -681,9 +617,7 @@ class TestcontainersPluginTest {
             .withArguments("testTask")
             .buildAndFail()
 
-        val output = result.output
-
         // Then
-        assertTrue(output.contains("ClassCastException") || output.contains("cannot be cast to"))
+        assertTrue(result.output.contains("ClassCastException") || result.output.contains("cannot be cast to"))
     }
 }

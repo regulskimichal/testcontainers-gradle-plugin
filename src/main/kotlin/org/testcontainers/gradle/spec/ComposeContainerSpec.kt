@@ -1,5 +1,6 @@
 package org.testcontainers.gradle.spec
 
+import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import java.time.Duration
 
 /**
@@ -48,6 +49,7 @@ import java.time.Duration
  *
  * @see org.testcontainers.gradle.TestcontainersConfig.composeContainer for registration
  */
+@TestcontainersDslMarker
 class ComposeContainerSpec {
     private val _exposedServices = mutableMapOf<String, List<Int>>()
     /**

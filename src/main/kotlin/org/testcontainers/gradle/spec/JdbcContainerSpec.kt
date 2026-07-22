@@ -1,6 +1,7 @@
 package org.testcontainers.gradle.spec
 
 import org.testcontainers.gradle.SerializableDockerImageName
+import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import java.io.Serial
 import java.io.Serializable
 
@@ -40,6 +41,7 @@ import java.io.Serializable
  * @see org.testcontainers.gradle.TestcontainersConfig.jdbcContainer for registration
  * @see org.testcontainers.gradle.DatabaseType for type-safe database selection
  */
+@TestcontainersDslMarker
 class JdbcContainerSpec(internal val defaultCompatibleSubstitute: String? = null) {
     internal var dockerImageName: SerializableDockerImageName? = null
     internal var databaseName: String? = null
