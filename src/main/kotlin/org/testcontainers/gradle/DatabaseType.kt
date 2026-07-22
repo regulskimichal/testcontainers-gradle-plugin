@@ -32,7 +32,11 @@ enum class DatabaseType(
      * The canonical Docker image name maintained by Testcontainers for this database.
      * Automatically used unless overridden in the container configuration.
      */
-    val canonicalImageName: String
+    val canonicalImageName: String,
+    /**
+     * Common alternative aliases for string-based lookup (e.g. "postgres", "mssql").
+     */
+    val aliases: List<String> = emptyList()
 ) {
     /** ClickHouse OLAP database. */
     CLICKHOUSE("clickhouse", "clickhouse/clickhouse-server"),
@@ -44,26 +48,26 @@ enum class DatabaseType(
     DB2("db2", "ibmcom/db2"),
     /** MariaDB open-source relational database (MySQL compatible). */
     MARIADB("mariadb", "mariadb"),
+    /** Microsoft SQL Server database. */
+    MSSQL("sqlserver", "mcr.microsoft.com/mssql/server", listOf("mssql")),
     /** MySQL relational database. */
     MYSQL("mysql", "mysql"),
-    /** Microsoft SQL Server database. */
-    MSSQL("sqlserver", "mcr.microsoft.com/mssql/server"),
     /** OceanBase distributed database compatible with MySQL/Oracle. */
     OCEANBASE("oceanbasece", "oceanbase/oceanbase-ce"),
     /** Oracle Database (free edition). */
     ORACLE("oracle", "gvenzl/oracle-free"),
+    /** pgvector - PostgreSQL with vector support for AI/ML. */
+    PGVECTOR("pgvector", "pgvector/pgvector"),
     /** PostGIS - PostgreSQL with geographic extensions. */
     POSTGIS("postgis", "postgis/postgis"),
     /** PostgreSQL relational database. */
-    POSTGRESQL("postgresql", "postgres"),
+    POSTGRESQL("postgresql", "postgres", listOf("postgres")),
     /** QuestDB time-series database. */
     QUESTDB("questdb", "questdb/questdb"),
-    /** TimescaleDB time-series database (PostgreSQL extension). */
-    TIMESCALEDB("timescaledb", "timescale/timescaledb"),
-    /** pgvector - PostgreSQL with vector support for AI/ML. */
-    PGVECTOR("pgvector", "pgvector/pgvector"),
     /** TiDB distributed NewSQL database compatible with MySQL. */
     TIDB("tidb", "pingcap/tidb"),
+    /** TimescaleDB time-series database (PostgreSQL extension). */
+    TIMESCALEDB("timescaledb", "timescale/timescaledb", listOf("timescale")),
     /** Timeplus streaming database. */
     TIMEPLUS("timeplus", "timeplus/timeplus"),
     /** Trino distributed SQL query engine. */
@@ -103,28 +107,12 @@ enum class DatabaseType(
  * - "invalid-db" → null
  */
 fun resolveCanonicalImageName(databaseType: String): String? {
-    val matchedEnum = DatabaseType.entries.firstOrNull {
-        it.id.equals(databaseType, ignoreCase = true) || it.name.equals(databaseType, ignoreCase = true)
-    }
-    if (matchedEnum != null) {
-        return matchedEnum.canonicalImageName
-    }
     val lower = databaseType.lowercase()
-    return when {
-        lower.contains("clickhouse") -> "clickhouse/clickhouse-server"
-        lower.contains("cockroach") -> "cockroachdb/cockroach"
-        lower.contains("db2") -> "ibmcom/db2"
-        lower.contains("mariadb") -> "mariadb"
-        lower.contains("mysql") -> "mysql"
-        lower.contains("oracle") -> "gvenzl/oracle-free"
-        lower.contains("pgvector") -> "pgvector/pgvector"
-        lower.contains("postgis") -> "postgis/postgis"
-        lower.contains("postgres") -> "postgres"
-        lower.contains("sqlserver") || lower.contains("mssql") -> "mcr.microsoft.com/mssql/server"
-        lower.contains("tidb") -> "pingcap/tidb"
-        lower.contains("timescale") -> "timescale/timescaledb"
-        lower.contains("trino") -> "trinodb/trino"
-        lower.contains("yugabyte") -> "yugabytedb/yugabyte"
-        else -> null
-    }
+    return DatabaseType.entries.firstOrNull { type ->
+        type.id.equals(databaseType, ignoreCase = true) ||
+        type.name.equals(databaseType, ignoreCase = true) ||
+        lower.contains(type.id) ||
+        lower.contains(type.name.lowercase()) ||
+        type.aliases.any { lower.contains(it) }
+    }?.canonicalImageName
 }
