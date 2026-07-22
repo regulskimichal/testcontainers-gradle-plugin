@@ -2,11 +2,12 @@ plugins {
     `kotlin-dsl`
     `java-gradle-plugin`
     `maven-publish`
+    id("com.gradle.plugin-publish") version "1.2.1"
     id("org.jetbrains.dokka") version "1.8.20"
 }
 
 group = "org.testcontainers"
-version = "1.0.0-SNAPSHOT"
+version = findProperty("version")?.toString() ?: "0.1.0-SNAPSHOT"
 
 java {
     toolchain {
@@ -15,9 +16,13 @@ java {
 }
 
 gradlePlugin {
+    website.set("https://github.com/org/testcontainers-gradle-plugin")
+    vcsUrl.set("https://github.com/org/testcontainers-gradle-plugin")
     plugins {
         create("testcontainers") {
             id = "org.testcontainers"
+            displayName = "Testcontainers Gradle Plugin"
+            description = "Testcontainers Gradle plugin for managing container lifecycles during builds"
             implementationClass = "org.testcontainers.gradle.TestcontainersPlugin"
         }
     }
