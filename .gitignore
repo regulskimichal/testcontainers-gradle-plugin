@@ -1,9 +1,13 @@
 .gradle/
 build/
-src/main/generated/
+bin/
+.kotlin/
 *.class
+/examples/**/gradlew
+/examples/**/gradlew.bat
+/examples/**/gradle/wrapper/
+/examples/**/src/main/generated/
 *.jar
 .idea/
 *.iml
 .DS_Store
-/bin/

@@ -32,7 +32,10 @@ open class TestcontainersConfig(
             databaseName = spec.databaseName,
             username = spec.username,
             password = spec.password,
-            reuse = spec.reuse
+            reuse = spec.reuse,
+            portMappings = spec.portMappings.map {
+                ContainerDefinition.PortMapping(it.hostPort, it.containerPort)
+            }
         )
     }
 

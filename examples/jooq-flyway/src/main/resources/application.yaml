@@ -1,0 +1,8 @@
+spring:
+  flyway:
+    locations: classpath:db/migration
+  jooq:
+    sql-dialect: POSTGRES
+
+server:
+  port: 8080

@@ -89,6 +89,13 @@ abstract class TestcontainersBuildService
         }
         container.withReuse(containerDefinition.reuse)
 
+        // Apply fixed port mappings: register the container port via withExposedPorts
+        // (additive — preserves ports the JDBC container already declared internally)
+        // and pin the host side via setPortBindings.
+        if (containerDefinition.portMappings.isNotEmpty()) {
+            container.setPortBindings(containerDefinition.portMappings.map { "${it.hostPort}:${it.containerPort}" })
+        }
+
         // Attach slf4j logger
         val containerLogger = LoggerFactory.getLogger("testcontainers.${containerDefinition.name}")
         container.withLogConsumer(Slf4jLogConsumer(containerLogger).withPrefix(containerDefinition.name))
