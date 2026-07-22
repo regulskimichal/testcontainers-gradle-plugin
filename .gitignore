@@ -1,0 +1,9 @@
+.gradle/
+build/
+src/main/generated/
+*.class
+*.jar
+.idea/
+*.iml
+.DS_Store
+/bin/

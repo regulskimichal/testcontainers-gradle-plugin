@@ -1,0 +1,11 @@
+[versions]
+testcontainers = "2.0.5"
+kotlin = "2.4.0"
+junit = "5.11.0"
+
+[libraries]
+testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-core = { group = "org.testcontainers", name = "testcontainers" }
+testcontainers-jdbc = { group = "org.testcontainers", name = "testcontainers-jdbc" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
+kotlin-test-junit5 = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit5", version.ref = "kotlin" }
