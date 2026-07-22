@@ -4,6 +4,13 @@ plugins {
     `maven-publish`
     id("com.gradle.plugin-publish") version "1.2.1"
     id("org.jetbrains.dokka") version "2.2.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom("$projectDir/config/detekt.yml")
 }
 
 group = "io.github.regulskimichal"
