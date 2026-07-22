@@ -1,5 +1,6 @@
 package org.testcontainers.gradle
 
+import org.testcontainers.utility.DockerImageName
 import java.io.Serializable
 
 /**
@@ -18,11 +19,10 @@ sealed class ContainerDefinition : Serializable {
     data class JdbcDatabase(
         override val name: String,
         val databaseType: String,
-        val image: String,
-        val databaseName: String,
-        val username: String,
-        val password: String,
-        val compatibleSubstituteFor: String? = null,
+        val dockerImageName: SerializableDockerImageName?,
+        val databaseName: String?,
+        val username: String?,
+        val password: String?,
         val reuse: Boolean = false
     ) : ContainerDefinition()
 
@@ -34,7 +34,7 @@ sealed class ContainerDefinition : Serializable {
 
     data class Generic(
         override val name: String,
-        val image: String,
+        val dockerImageName: SerializableDockerImageName,
         val exposedPorts: List<Int>,
         val env: Map<String, String>,
         val reuse: Boolean = false,
@@ -49,4 +49,18 @@ sealed class ContainerDefinition : Serializable {
         val exposedServices: Map<String, List<Int>>, // serviceName -> list of ports
         val startupTimeoutSeconds: Long
     ) : ContainerDefinition()
+}
+
+class SerializableDockerImageName(
+    val image: String,
+    val compatibleSubstituteFor: String? = null
+) : Serializable {
+    fun toDockerImageName(): DockerImageName {
+        val parsed = DockerImageName.parse(image)
+        return if (compatibleSubstituteFor != null) {
+            parsed.asCompatibleSubstituteFor(compatibleSubstituteFor)
+        } else {
+            parsed
+        }
+    }
 }

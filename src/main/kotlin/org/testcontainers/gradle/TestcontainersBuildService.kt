@@ -71,21 +71,22 @@ abstract class TestcontainersBuildService
 
         val defaultInstance = containerProvider.newInstance()
         val containerClazz = defaultInstance.javaClass
+        val defaultImageName = defaultInstance.dockerImageName
 
-        // Resolve DockerImageName safely in target classloader
-        val image = if (containerDefinition.compatibleSubstituteFor != null) {
-            DockerImageName.parse(containerDefinition.image)
-                .asCompatibleSubstituteFor(containerDefinition.compatibleSubstituteFor)
-        } else {
-            DockerImageName.parse(containerDefinition.image)
-        }
+        val image = containerDefinition.dockerImageName?.toDockerImageName() ?: DockerImageName.parse(defaultImageName)
 
         val constructor = containerClazz.getConstructor(DockerImageName::class.java)
         val container = constructor.newInstance(image) as JdbcDatabaseContainer<*>
 
-        container.withDatabaseName(containerDefinition.databaseName)
-        container.withUsername(containerDefinition.username)
-        container.withPassword(containerDefinition.password)
+        if (containerDefinition.databaseName != null) {
+            container.withDatabaseName(containerDefinition.databaseName)
+        }
+        if (containerDefinition.username != null) {
+            container.withUsername(containerDefinition.username)
+        }
+        if (containerDefinition.password != null) {
+            container.withPassword(containerDefinition.password)
+        }
         container.withReuse(containerDefinition.reuse)
 
         // Attach slf4j logger
@@ -96,7 +97,7 @@ abstract class TestcontainersBuildService
     }
 
     private fun createGenericContainer(containerDefinition: ContainerDefinition.Generic): GenericContainer<*> {
-        val container = GenericContainer(DockerImageName.parse(containerDefinition.image))
+        val container = GenericContainer(containerDefinition.dockerImageName.toDockerImageName())
         if (containerDefinition.exposedPorts.isNotEmpty()) {
             container.withExposedPorts(*containerDefinition.exposedPorts.toTypedArray())
         }

@@ -29,7 +29,7 @@ Then apply the plugin in your `build.gradle.kts` (assuming it is resolved from a
 
 ```kotlin
 plugins {
-    id("org.testcontainers") version "1.0.0"
+    id("org.testcontainers") version "<VERSION>"
 }
 ```
 
@@ -43,28 +43,24 @@ testcontainers {
     // 1. JDBC Database Container (Postgres example)
     // Preferred: use DatabaseType enum for type-safety
     jdbcContainer("db", DatabaseType.POSTGRESQL) {
-        image = "postgres:17-alpine"
-        databaseName = "demo-db"
-        username = "demo-user"
-        password = "demo-password"
-        reuse = false // Optional (defaults to false)
+        image("postgres:18-alpine")
     }
 
     // 2. Generic Container (Redis example)
     genericContainer("redis") {
-        image = "redis:7-alpine"
-        exposedPorts = listOf(6379)
-        env = mapOf("REDIS_PASSWORD" to "secret")
-        startupTimeoutSeconds = 45
-        // Configure wait strategies: ListeningPort, Http, or LogMessage
-        waitStrategy = WaitStrategy.ListeningPort
+        image("redis:7-alpine")
+        exposedPorts(6379)
+        env("REDIS_PASSWORD" to "secret")
+        startupTimeoutSeconds(45)
+        // Configure wait strategies: waitPort(), waitHttp(path, status), or waitLog(regex, times)
+        waitPort()
     }
 
     // 3. Docker Compose Setup
     composeContainer("my-stack", "compose.yaml") {
         service("web", 8080)
         service("cache", 6379)
-        startupTimeoutSeconds = 120
+        startupTimeoutSeconds(120)
     }
 }
 ```
@@ -90,26 +86,22 @@ import org.testcontainers.gradle.DatabaseType
 
 testcontainers {
     jdbcContainer("db", DatabaseType.POSTGRESQL) {
-        image = "postgres:17-alpine"
-        databaseName = "testdb"
-        username = "testuser"
-        password = "testpassword"
-        
-        // Optional properties:
-        compatibleSubstituteFor = "postgres" 
-        reuse = true
+        // Optional configuration:
+        image("custom-postgres:18") // Compatibility is automatically determined ("postgres") based on the DatabaseType!
+        databaseName("testdb")
+        username("testuser")
+        password("testpassword")
+        reuse(false)
     }
 }
 ```
 
 ### Configuration Options:
-* **`databaseType`**: The database type. Use the `DatabaseType` enum (e.g. `DatabaseType.POSTGRESQL`, `DatabaseType.MYSQL`, `DatabaseType.MARIADB`, `DatabaseType.MSSQL`, etc.).
-* **`image`**: The full Docker image path (e.g., `"mysql:8.0"`).
-* **`databaseName`**: The name of the database to create inside the container.
-* **`username`**: The database administrator username.
-* **`password`**: The database administrator password.
-* **`compatibleSubstituteFor`** *(Optional)*: Set to denote the container as a compatible replacement for a specific database vendor.
-* **`reuse`** *(Optional)*: Enables Testcontainers' reuse mode to keep container instances alive across build invocations (defaults to `false`).
+* **`image(name, compatibleSubstituteFor)`** *(Optional)*: Sets the Docker image name. The compatibility substitute is automatically resolved based on the database type (e.g. `"postgres"` for `DatabaseType.POSTGRESQL`). You can explicitly provide it as a second argument (e.g. `image("custom-postgres", "postgres")`) if you are using an unrecognized database type/fork. If omitted, the default image from the Testcontainers provider is used.
+* **`databaseName(name)`** *(Optional)*: Sets the name of the database. If omitted, falls back to the default database name from the provider.
+* **`username(name)`** *(Optional)*: Sets the database administrator username. If omitted, falls back to the default username from the provider.
+* **`password(name)`** *(Optional)*: Sets the database administrator password. If omitted, falls back to the default password from the provider.
+* **`reuse(boolean)`** *(Optional)*: Enables Testcontainers' reuse mode to keep container instances alive across build executions (defaults to `false`).
 
 ---
 
@@ -188,7 +180,7 @@ When running builds, Testcontainers starts **Ryuk** (a sidecar "moby-ryuk" conta
 As a result, you will notice that the Ryuk container and your defined databases/services remain running in Docker even after your Gradle task finishes.
 
 ### Why this is OK (and actually a feature)
-1. **Reusability and Performance (Huge Win)**: Keeping containers alive in the background allows subsequent Gradle tasks to instantly reuse the running containers. Instead of waiting 10–30 seconds for a database to download, initialize, and run on every build, the next build connects to the running container in milliseconds.
+1. **Reusability and Performance**: Keeping containers alive in the background allows subsequent Gradle tasks to instantly reuse the running containers. Instead of waiting 10–30 seconds for a database to download, initialize, and run on every build, the next build connects to the running container in milliseconds.
 2. **Guaranteed Cleanup**: Once the Gradle Daemon eventually exits (when you run `gradle --stop` or after the 3-hour idle timeout), the JVM shutdown hooks run, and Ryuk immediately reaps and destroys all container resources, volumes, and networks. No orphaned containers are leaked.
 3. **Manual Control**: If you want to force-stop the containers immediately to free up ports or memory, you can simply run the generated lifecycle task:
    ```bash
