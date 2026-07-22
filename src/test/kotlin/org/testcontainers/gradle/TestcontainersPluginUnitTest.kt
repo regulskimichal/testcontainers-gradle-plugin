@@ -10,7 +10,7 @@ class TestcontainersPluginUnitTest {
 
     @Test
     fun `plugin registers start and stop tasks with correct postgres configuration`() {
-        // Create a mock project
+        // Given
         val project = ProjectBuilder.builder().build()
 
         // Apply the plugin under test
@@ -26,17 +26,16 @@ class TestcontainersPluginUnitTest {
             reuse(true)
         }
 
-        // Force project evaluation to trigger the project.afterEvaluate { ... } blocks
+        // When
         (project as org.gradle.api.internal.project.ProjectInternal).evaluate()
 
-        // Verify that start and stop tasks were registered for our postgresdb container
+        // Then
         val startTask = project.tasks.findByName("startPostgresdbContainer") as? StartContainersTask
         val stopTask = project.tasks.findByName("stopPostgresdbContainer") as? StopContainersTask
 
         assertNotNull(startTask, "Start task should be registered")
         assertNotNull(stopTask, "Stop task should be registered")
 
-        // Verify task definitions match our config
         val startDefinitions = startTask.containerDefinitions.get()
         assertEquals(1, startDefinitions.size)
 
@@ -57,6 +56,7 @@ class TestcontainersPluginUnitTest {
 
     @Test
     fun `plugin registers start task without explicitly configuring optional parameters`() {
+        // Given
         val project = ProjectBuilder.builder().build()
         project.plugins.apply("io.github.regulskimichal.testcontainers")
 
@@ -65,8 +65,10 @@ class TestcontainersPluginUnitTest {
             // No configuration parameters passed at all
         }
 
+        // When
         (project as org.gradle.api.internal.project.ProjectInternal).evaluate()
 
+        // Then
         val startTask = project.tasks.findByName("startPostgresdbContainer") as? StartContainersTask
         assertNotNull(startTask)
 
@@ -80,6 +82,7 @@ class TestcontainersPluginUnitTest {
 
     @Test
     fun `plugin automatically resolves compatible substitute from database type`() {
+        // Given
         val project = ProjectBuilder.builder().build()
         project.plugins.apply("io.github.regulskimichal.testcontainers")
 
@@ -88,8 +91,10 @@ class TestcontainersPluginUnitTest {
             image("custom-postgres:latest")
         }
 
+        // When
         (project as org.gradle.api.internal.project.ProjectInternal).evaluate()
 
+        // Then
         val startTask = project.tasks.findByName("startPostgresdbContainer") as? StartContainersTask
         assertNotNull(startTask)
 
@@ -102,11 +107,13 @@ class TestcontainersPluginUnitTest {
 
     @Test
     fun `genericContainer validation fails when image is missing`() {
+        // Given
         val project = ProjectBuilder.builder().build()
         project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
+        // When & Then
         val exception = org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
             extension.genericContainer("invalid") {
                 // no image configured
@@ -117,11 +124,13 @@ class TestcontainersPluginUnitTest {
 
     @Test
     fun `composeContainer validation fails when no services are exposed`() {
+        // Given
         val project = ProjectBuilder.builder().build()
         project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
+        // When & Then
         val exception = org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
             extension.composeContainer("invalid-compose", "compose.yaml") {
                 // no service() called
@@ -135,11 +144,13 @@ class TestcontainersPluginUnitTest {
 
     @Test
     fun `extension accessors throw error for unregistered container name`() {
+        // Given
         val project = ProjectBuilder.builder().build()
         project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
+        // When & Then
         val exception = org.junit.jupiter.api.assertThrows<IllegalStateException> {
             extension.getContainer<org.testcontainers.containers.JdbcDatabaseContainer<*>>("non-existent")
         }
@@ -148,6 +159,7 @@ class TestcontainersPluginUnitTest {
 
     @Test
     fun `resolveCanonicalImageName resolves all DatabaseType enums and aliases correctly`() {
+        // When & Then
         // Test all enum entries resolve to their canonical image names
         DatabaseType.entries.forEach { dbType ->
             assertEquals(dbType.canonicalImageName, resolveCanonicalImageName(dbType.id))

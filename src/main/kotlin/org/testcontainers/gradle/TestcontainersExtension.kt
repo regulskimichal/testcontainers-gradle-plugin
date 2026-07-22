@@ -2,7 +2,7 @@ package org.testcontainers.gradle
 
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.provider.Provider
-import org.gradle.api.services.BuildService
+import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import javax.inject.Inject
 
 /**
@@ -31,6 +31,7 @@ import javax.inject.Inject
  * @see TestcontainersConfig for configuration methods
  * @see TestcontainersBuildService for runtime container access
  */
+@TestcontainersDslMarker
 abstract class TestcontainersExtension @Inject constructor(
     layout: ProjectLayout
 ) : TestcontainersConfig(layout) {

@@ -1,6 +1,7 @@
 package org.testcontainers.gradle
 
 import org.gradle.api.file.ProjectLayout
+import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import org.testcontainers.gradle.spec.ComposeContainerSpec
 import org.testcontainers.gradle.spec.GenericContainerSpec
 import org.testcontainers.gradle.spec.JdbcContainerSpec
@@ -21,6 +22,7 @@ import java.io.File
  * @see TestcontainersExtension for the public DSL
  * @see ContainerDefinition for the serializable representation
  */
+@TestcontainersDslMarker
 open class TestcontainersConfig(
     private val layout: ProjectLayout
 ) {
@@ -162,6 +164,7 @@ open class TestcontainersConfig(
                     (spec.waitStrategy as GenericContainerSpec.WaitStrategySpec.Http).path,
                     (spec.waitStrategy as GenericContainerSpec.WaitStrategySpec.Http).statusCode
                 )
+
                 is GenericContainerSpec.WaitStrategySpec.LogMessage -> ContainerDefinition.WaitStrategy.LogMessage(
                     (spec.waitStrategy as GenericContainerSpec.WaitStrategySpec.LogMessage).regex,
                     (spec.waitStrategy as GenericContainerSpec.WaitStrategySpec.LogMessage).times

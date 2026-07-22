@@ -1,6 +1,7 @@
 package org.testcontainers.gradle.spec
 
 import org.testcontainers.gradle.SerializableDockerImageName
+import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import java.io.Serial
 import java.io.Serializable
 import java.time.Duration
@@ -46,6 +47,7 @@ import java.time.Duration
  * @see WaitStrategySpec for container readiness detection
  */
 @Suppress("TooManyFunctions")
+@TestcontainersDslMarker
 class GenericContainerSpec {
     internal var dockerImageName: SerializableDockerImageName? = null
     internal var exposedPorts: List<Int> = emptyList()
