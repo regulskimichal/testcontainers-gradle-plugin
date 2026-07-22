@@ -19,7 +19,7 @@ class TestcontainersPluginUnitTest {
 
         // Configure Postgres container via the plugin's DSL extension
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
-        extension.jdbcContainer("postgresdb", "postgresql") {
+        extension.jdbcContainer("postgresdb", DatabaseType.POSTGRESQL) {
             image("postgres:18-alpine")
             databaseName("testdb")
             username("testuser")
@@ -62,7 +62,7 @@ class TestcontainersPluginUnitTest {
         project.plugins.apply("org.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
-        extension.jdbcContainer("postgresdb", "postgresql") {
+        extension.jdbcContainer("postgresdb", DatabaseType.POSTGRESQL) {
             // No configuration parameters passed at all
         }
 
@@ -85,7 +85,7 @@ class TestcontainersPluginUnitTest {
         project.plugins.apply("org.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
-        extension.jdbcContainer("postgresdb", "postgresql") {
+        extension.jdbcContainer("postgresdb", DatabaseType.POSTGRESQL) {
             image("custom-postgres:latest")
         }
 
@@ -99,5 +99,48 @@ class TestcontainersPluginUnitTest {
         assertNotNull(postgresDef.dockerImageName)
         assertEquals("custom-postgres:latest", postgresDef.dockerImageName.image)
         assertEquals("postgres", postgresDef.dockerImageName.compatibleSubstituteFor)
+    }
+
+    @Test
+    fun `genericContainer validation fails when image is missing`() {
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply("org.testcontainers")
+
+        val extension = project.extensions.getByType(TestcontainersExtension::class.java)
+
+        val exception = org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
+            extension.genericContainer("invalid") {
+                // no image configured
+            }
+        }
+        assertEquals("Generic container requires DockerImageName", exception.message)
+    }
+
+    @Test
+    fun `composeContainer validation fails when no services are exposed`() {
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply("org.testcontainers")
+
+        val extension = project.extensions.getByType(TestcontainersExtension::class.java)
+
+        val exception = org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
+            extension.composeContainer("invalid-compose", "compose.yaml") {
+                // no service() called
+            }
+        }
+        assertEquals("Container 'invalid-compose' error: at least one service must be exposed via service().", exception.message)
+    }
+
+    @Test
+    fun `extension accessors throw error for unregistered container name`() {
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply("org.testcontainers")
+
+        val extension = project.extensions.getByType(TestcontainersExtension::class.java)
+
+        val exception = org.junit.jupiter.api.assertThrows<IllegalStateException> {
+            extension.getJdbcDatabaseContainer("non-existent")
+        }
+        assertEquals("No container registered with name 'non-existent'.", exception.message)
     }
 }

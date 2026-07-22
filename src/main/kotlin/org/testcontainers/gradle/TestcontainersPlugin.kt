@@ -43,17 +43,19 @@ class TestcontainersPlugin : Plugin<Project> {
         // 4. Automatically register start/stop tasks for each container definition.
         project.afterEvaluate {
             for (definition in ext.config.resolveDefinitions()) {
-                val capitalizedName = definition.name.replaceFirstChar {
-                    if (it.isLowerCase()) it.uppercase() else it.toString()
-                }
+                val sanitizedName = definition.name.split(Regex("[^a-zA-Z0-9]+"))
+                    .filter { it.isNotEmpty() }
+                    .joinToString("") { part ->
+                        part.replaceFirstChar { if (it.isLowerCase()) it.uppercase() else it.toString() }
+                    }
                 
-                project.tasks.register<StartContainersTask>("start${capitalizedName}Container") {
+                project.tasks.register<StartContainersTask>("start${sanitizedName}Container") {
                     @Suppress("UNCHECKED_CAST")
                     testcontainersService.set(serviceProvider as Provider<TestcontainersBuildService>)
                     containerDefinitions.add(definition)
                 }
 
-                project.tasks.register<StopContainersTask>("stop${capitalizedName}Container") {
+                project.tasks.register<StopContainersTask>("stop${sanitizedName}Container") {
                     @Suppress("UNCHECKED_CAST")
                     testcontainersService.set(serviceProvider as Provider<TestcontainersBuildService>)
                     containerDefinitions.add(definition)
