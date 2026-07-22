@@ -1,12 +1,9 @@
 name: Publish Plugin to Gradle Portal
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag version to publish (e.g. v0.1.0)'
-        required: true
-        type: string
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: read
@@ -15,19 +12,18 @@ jobs:
   publish:
     name: Publish to Gradle Plugin Portal
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
           fetch-depth: 0
 
       - name: Extract Version
         id: get_version
         run: |
-          RAW_TAG="${{ inputs.tag }}"
-          VERSION=${RAW_TAG#v}
+          VERSION=${GITHUB_REF_NAME#v}
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Set up JDK 17
