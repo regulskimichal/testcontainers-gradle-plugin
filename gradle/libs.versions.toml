@@ -1,7 +1,7 @@
 [versions]
 testcontainers = "2.0.5"
 kotlin = "2.4.0"
-junit = "5.11.0"
+junit = "6.1.2"
 
 [libraries]
 testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
