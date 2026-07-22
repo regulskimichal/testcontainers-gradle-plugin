@@ -5,6 +5,14 @@ plugins {
     alias(libs.plugins.gradle.pluginPublish)
     alias(libs.plugins.dokka)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.axion.release)
+}
+
+scmVersion {
+    tag {
+        prefix = "v"
+    }
+    useHighestVersion = true
 }
 
 detekt {
@@ -14,12 +22,14 @@ detekt {
 }
 
 group = "io.github.regulskimichal"
-version = findProperty("version")?.toString() ?: "0.1.0-SNAPSHOT"
+version = scmVersion.version
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
+    withSourcesJar()
+    withJavadocJar()
 }
 
 gradlePlugin {
@@ -51,44 +61,8 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// Dokka + packaging of sources and javadoc (KDoc) jars
 val dokkaGeneratePublicationHtml = tasks.named("dokkaGeneratePublicationHtml")
-
-val javadocJar = tasks.register<Jar>("javadocJar") {
-    description = "Assembles a jar archive containing the Javadoc (KDoc) API documentation."
+tasks.named<Jar>("javadocJar") {
     dependsOn(dokkaGeneratePublicationHtml)
-    archiveClassifier.set("javadoc")
-    // Dokka V2 generates HTML docs to build/dokka/html/publication
     from(layout.buildDirectory.dir("dokka/html/publication"))
 }
-
-val sourcesJar = tasks.register<Jar>("sourcesJar") {
-    description = "Assembles a jar archive containing the source code."
-    archiveClassifier.set("sources")
-    from(sourceSets["main"].allSource)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            artifact(sourcesJar)
-            artifact(javadocJar)
-            pom {
-                name.set("testcontainers-gradle-plugin")
-                description.set("Testcontainers Gradle plugin")
-            }
-        }
-    }
-}
-
-// If a plugin marker publication (pluginMaven) exists, attach artifacts to it as well
-afterEvaluate {
-    publishing.publications.findByName("pluginMaven")?.let { pub ->
-        (pub as MavenPublication).apply {
-            artifact(sourcesJar)
-            artifact(javadocJar)
-        }
-    }
-}
-
