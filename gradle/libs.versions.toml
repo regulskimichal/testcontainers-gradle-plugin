@@ -2,9 +2,10 @@
 testcontainers = "2.0.5"
 kotlin = "2.4.0"
 junit = "6.1.2"
-pluginPublish = "1.2.1"
+pluginPublish = "2.1.1"
 dokka = "2.2.0"
 detekt = "1.23.8"
+axionRelease = "1.21.2"
 
 [libraries]
 testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
@@ -17,3 +18,4 @@ kotlin-test-junit5 = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit
 gradle-pluginPublish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublish" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axionRelease" }
