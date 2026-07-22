@@ -1,5 +1,6 @@
+import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.gradle.DatabaseType
-import org.testcontainers.gradle.getJdbcDatabaseContainer
+import org.testcontainers.gradle.getContainer
 
 plugins {
     id("org.testcontainers") version "1.0.0-SNAPSHOT"
@@ -20,7 +21,7 @@ tasks.register("printDbInfo") {
     dependsOn("startDbContainer")
     usesService(testcontainers.service)
 
-    val dbProvider = testcontainers.getJdbcDatabaseContainer("db")
+    val dbProvider = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db")
 
     doFirst {
         val db = dbProvider.get()
