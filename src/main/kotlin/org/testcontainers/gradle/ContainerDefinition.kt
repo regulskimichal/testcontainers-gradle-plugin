@@ -16,6 +16,11 @@ sealed class ContainerDefinition : Serializable {
         data class LogMessage(val regex: String, val times: Int) : WaitStrategy()
     }
 
+    data class PortMapping(
+        val hostPort: Int,
+        val containerPort: Int
+    ) : Serializable
+
     data class JdbcDatabase(
         override val name: String,
         val databaseType: String,
@@ -23,7 +28,8 @@ sealed class ContainerDefinition : Serializable {
         val databaseName: String?,
         val username: String?,
         val password: String?,
-        val reuse: Boolean = false
+        val reuse: Boolean = false,
+        val portMappings: List<PortMapping> = emptyList()
     ) : ContainerDefinition()
 
     data class VolumeMount(
