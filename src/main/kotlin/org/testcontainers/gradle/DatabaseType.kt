@@ -84,7 +84,6 @@ enum class DatabaseType(
  * - Enum IDs: "postgresql" → "postgres"
  * - Common shortcuts: "postgres" → "postgres"
  * - Partial matching: "sql" → "mcr.microsoft.com/mssql/server"
- * - Type-safe enum lookup: [DatabaseType.POSTGRESQL.canonicalImageName]
  *
  * Used internally by [TestcontainersConfig.jdbcContainer(String, String, Function)]
  * to resolve database type strings to image names.
