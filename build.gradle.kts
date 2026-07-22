@@ -2,6 +2,7 @@ plugins {
     `kotlin-dsl`
     `java-gradle-plugin`
     `maven-publish`
+    id("org.jetbrains.dokka") version "1.8.20"
 }
 
 group = "org.testcontainers"
@@ -35,3 +36,45 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+// Dokka + packaging of sources and javadoc (KDoc) jars
+val dokkaHtml = tasks.named("dokkaHtml")
+
+val javadocJar = tasks.register<Jar>("javadocJar") {
+    description = "Assembles a jar archive containing the Javadoc (KDoc) API documentation."
+    dependsOn(dokkaHtml)
+    archiveClassifier.set("javadoc")
+    // Dokka generates HTML docs to build/dokka/html
+    from(layout.buildDirectory.dir("dokka/html"))
+}
+
+val sourcesJar = tasks.register<Jar>("sourcesJar") {
+    description = "Assembles a jar archive containing the source code."
+    archiveClassifier.set("sources")
+    from(sourceSets["main"].allSource)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+            artifact(sourcesJar)
+            artifact(javadocJar)
+            pom {
+                name.set("testcontainers-gradle-plugin")
+                description.set("Testcontainers Gradle plugin")
+            }
+        }
+    }
+}
+
+// If a plugin marker publication (pluginMaven) exists, attach artifacts to it as well
+afterEvaluate {
+    publishing.publications.findByName("pluginMaven")?.let { pub ->
+        (pub as MavenPublication).apply {
+            artifact(sourcesJar)
+            artifact(javadocJar)
+        }
+    }
+}
+
