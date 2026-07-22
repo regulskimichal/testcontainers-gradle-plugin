@@ -139,7 +139,7 @@ class TestcontainersPluginUnitTest {
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
         val exception = org.junit.jupiter.api.assertThrows<IllegalStateException> {
-            extension.getJdbcDatabaseContainer("non-existent")
+            extension.getContainer<org.testcontainers.containers.JdbcDatabaseContainer<*>>("non-existent")
         }
         assertEquals("No container registered with name 'non-existent'.", exception.message)
     }

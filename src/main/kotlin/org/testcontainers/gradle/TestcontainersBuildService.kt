@@ -1,7 +1,6 @@
 package org.testcontainers.gradle
 
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.slf4j.LoggerFactory
@@ -20,22 +19,74 @@ import java.util.*
 
 /**
  * Gradle [BuildService] that manages container lifecycles lazily on demand.
+ *
+ * This is the internal execution-time service responsible for:
+ * - Creating and caching container instances based on [ContainerDefinition]
+ * - Starting containers at build time
+ * - Enforcing single-threaded access to prevent race conditions
+ * - Automatically stopping containers when the build completes
+ *
+ * Access containers via the `testcontainers.service` provider:
+ * ```kotlin
+ * tasks.register("migrate") {
+ *     dependsOn("startPostgresContainer")
+ *     doLast {
+ *         val postgres = testcontainers.service.map {
+ *             it.getContainer<JdbcDatabaseContainer<*>>("postgres")
+ *         }
+ *         val url = postgres.get().jdbcUrl
+ *     }
+ * }
+ * ```
+ *
+ * Enforces `maxParallelUsages = 1` to prevent concurrent access to shared containers,
+ * ensuring that parallel test execution or code generation tasks don't interfere with
+ * shared container state.
+ *
+ * @see TestcontainersExtension.service for public access patterns
+ * @see StartContainersTask for automatic startup
+ * @see StopContainersTask for automatic shutdown
  */
 abstract class TestcontainersBuildService
     : BuildService<TestcontainersBuildService.Parameters>, AutoCloseable {
 
     interface Parameters : BuildServiceParameters {
-        /** Dynamic classpath containing specialized database modules. */
+        /**
+         * Dynamic classpath containing specialized Testcontainers database modules.
+         *
+         * Used to load JDBC container implementations via [ServiceLoader] when creating
+         * database containers. Populated by the `testcontainersClasspath` configuration.
+         */
         val classpathFiles: ConfigurableFileCollection
     }
 
     private val registeredContainers = mutableMapOf<String, Startable>()
     private val startedContainers = mutableSetOf<String>()
 
-    /** Marks a container as started in this build. Called automatically by [StartContainersTask]. */
+    /**
+     * Marks a container as started in this build execution.
+     * Called automatically by [StartContainersTask] after successful container startup.
+     *
+     * Internal API - do not call from user build scripts.
+     */
     internal fun markContainerStarted(name: String) = synchronized(this) { startedContainers.add(name) }
 
-    /** Returns true if the named container was started (not skipped) in this build. */
+    /**
+     * Returns `true` if the named container was actually started (not skipped) in this build.
+     *
+     * Use this to conditionally execute downstream tasks that depend on a fresh container:
+     * ```kotlin
+     * task("migrate") {
+     *     val service = testcontainers.service
+     *     onlyIf { service.wasContainerStarted("postgres") }
+     * }
+     * ```
+     *
+     * @param name The container name as specified in [TestcontainersConfig.jdbcContainer], etc.
+     * @return `true` if the container was explicitly started; `false` if the start task was UP-TO-DATE
+     *
+     * @see StartContainersTask for when containers are marked as started
+     */
     fun wasContainerStarted(name: String): Boolean = synchronized(this) { startedContainers.contains(name) }
 
     private val classLoader: ClassLoader by lazy {
@@ -43,9 +94,7 @@ abstract class TestcontainersBuildService
         URLClassLoader(urls, javaClass.classLoader)
     }
 
-    /**
-     * Lazily get or start the container instance.
-     */
+    @PublishedApi
     @Suppress("UNCHECKED_CAST")
     @Synchronized
     internal fun <T : Startable> getContainer(definition: ContainerDefinition): T {
@@ -168,7 +217,16 @@ abstract class TestcontainersBuildService
         return container
     }
 
-    /** Called by Gradle automatically at build end — stops all containers. */
+    /**
+     * Stops all running containers and cleans up resources.
+     *
+     * Called automatically by Gradle at the end of the build. Ensures that even if errors occur,
+     * all containers are properly shut down to prevent resource leaks or port conflicts on subsequent builds.
+     *
+     * Individual container stop failures are logged but do not abort the shutdown process.
+     *
+     * Internal API - do not call from user build scripts.
+     */
     @Synchronized
     override fun close() {
         registeredContainers.values.forEach {

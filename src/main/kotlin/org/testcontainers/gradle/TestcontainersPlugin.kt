@@ -2,14 +2,35 @@ package org.testcontainers.gradle
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.provider.Provider
-import org.gradle.api.services.BuildService
-import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.assign
+import org.gradle.kotlin.dsl.register
 
 /**
- * A minimal, framework-agnostic Gradle plugin that manages container lifecycle
- * for build-time tasks (code generation, schema inspection, etc.).
+ * A minimal, framework-agnostic Gradle plugin that manages container lifecycle for build-time tasks.
+ *
+ * This plugin provides:
+ * - Lazy container lifecycle management (start/stop containers on demand)
+ * - Build-time container registration for tasks that need external services
+ * - Automatic generation of `start` and `stop` container tasks
+ * - Configuration cache and build cache support
+ * - Reusable container instances across build executions (via Testcontainers reuse feature)
+ *
+ * Usage:
+ * ```kotlin
+ * plugins {
+ *     id("org.testcontainers")
+ * }
+ *
+ * testcontainers {
+ *     jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
+ *         databaseName = "testdb"
+ *         portMapping(5432)
+ *     }
+ * }
+ * ```
+ *
+ * The plugin automatically registers `startPostgresContainer` and `stopPostgresContainer` tasks
+ * that can be used as task dependencies for build-time code generation or schema inspection tasks.
  */
 class TestcontainersPlugin : Plugin<Project> {
 
@@ -37,8 +58,7 @@ class TestcontainersPlugin : Plugin<Project> {
             }
 
         // 3. Wire execution-time providers onto the extension.
-        @Suppress("UNCHECKED_CAST")
-        ext.service  = serviceProvider as Provider<out BuildService<*>>
+        ext.service = serviceProvider
 
         // 4. Automatically register start/stop tasks for each container definition.
         project.afterEvaluate {
@@ -48,17 +68,26 @@ class TestcontainersPlugin : Plugin<Project> {
                     .joinToString("") { part ->
                         part.replaceFirstChar { if (it.isLowerCase()) it.uppercase() else it.toString() }
                     }
-                
+                val containerName = definition.name
+
                 project.tasks.register<StartContainersTask>("start${sanitizedName}Container") {
-                    @Suppress("UNCHECKED_CAST")
-                    testcontainersService.set(serviceProvider as Provider<TestcontainersBuildService>)
+                    testcontainersService.set(serviceProvider)
                     containerDefinitions.add(definition)
+                    // Ensure the start task runs after clean so that UP-TO-DATE checks
+                    // are re-evaluated properly when the user runs `clean build`.
+                    mustRunAfter(project.tasks.matching { it.name == "clean" })
+                    // Automatically configure a default marker file to support UP-TO-DATE checks.
+                    markerFile.set(project.layout.buildDirectory.file("testcontainers/start${sanitizedName}.marker"))
                 }
 
                 project.tasks.register<StopContainersTask>("stop${sanitizedName}Container") {
-                    @Suppress("UNCHECKED_CAST")
-                    testcontainersService.set(serviceProvider as Provider<TestcontainersBuildService>)
+                    testcontainersService.set(serviceProvider)
                     containerDefinitions.add(definition)
+                    // Wire the build service so Gradle enforces max-parallelism constraints.
+                    usesService(serviceProvider)
+                    // Skip stopping when the container was never started (e.g. all tasks were
+                    // UP-TO-DATE and the container start was skipped).
+                    onlyIf { serviceProvider.get().wasContainerStarted(containerName) }
                 }
             }
         }

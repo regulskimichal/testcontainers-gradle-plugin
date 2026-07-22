@@ -31,7 +31,8 @@ class TestcontainersPluginTest {
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin")
         val kts = """
-            import org.testcontainers.gradle.getJdbcDatabaseContainer
+            import org.testcontainers.containers.JdbcDatabaseContainer
+            import org.testcontainers.gradle.getContainer
 
             plugins {
                 id("org.testcontainers")
@@ -58,7 +59,7 @@ class TestcontainersPluginTest {
                 dependsOn("startDbContainer")
                 usesService(testcontainers.service)
                 doFirst {
-                    val db = testcontainers.getJdbcDatabaseContainer("db").get()
+                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
                     val url = db.jdbcUrl
                     val user = db.username
                     val password = db.password
@@ -121,7 +122,8 @@ class TestcontainersPluginTest {
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin")
         val kts = """
-            import org.testcontainers.gradle.getComposeContainer
+            import org.testcontainers.containers.ComposeContainer
+            import org.testcontainers.gradle.getContainer
 
             plugins {
                 id("org.testcontainers")
@@ -138,7 +140,7 @@ class TestcontainersPluginTest {
                 dependsOn("startMyStackContainer")
                 usesService(testcontainers.service)
                 doFirst {
-                    val container = testcontainers.getComposeContainer("my-stack").get()
+                    val container = testcontainers.getContainer<ComposeContainer>("my-stack").get()
                     val webHost = container.getServiceHost("web", 8080)
                     val webPort = container.getServicePort("web", 8080)
                     val cacheHost = container.getServiceHost("cache", 6379)
@@ -318,13 +320,14 @@ class TestcontainersPluginTest {
         val appBuildFile = File(appDir, "build.gradle.kts")
         @Language("kotlin")
         val appKts = """
-            import org.testcontainers.gradle.getJdbcDatabaseContainer
+            import org.testcontainers.containers.JdbcDatabaseContainer
+            import org.testcontainers.gradle.getContainer
 
             tasks.register("printAppDb") {
                 dependsOn("startDbContainer")
                 usesService(testcontainers.service)
                 doLast {
-                    val db = testcontainers.getJdbcDatabaseContainer("db").get()
+                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
                     println("APP_DB_PORT=" + db.firstMappedPort)
                 }
             }
@@ -335,13 +338,14 @@ class TestcontainersPluginTest {
         val coreBuildFile = File(coreDir, "build.gradle.kts")
         @Language("kotlin")
         val coreKts = """
-            import org.testcontainers.gradle.getJdbcDatabaseContainer
+            import org.testcontainers.containers.JdbcDatabaseContainer
+            import org.testcontainers.gradle.getContainer
 
             tasks.register("printCoreDb") {
                 dependsOn("startDbContainer")
                 usesService(testcontainers.service)
                 doLast {
-                    val db = testcontainers.getJdbcDatabaseContainer("db").get()
+                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
                     println("CORE_DB_PORT=" + db.firstMappedPort)
                 }
             }
@@ -393,7 +397,9 @@ class TestcontainersPluginTest {
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin")
         val kts = """
-            import org.testcontainers.gradle.getGenericContainer
+            import org.testcontainers.containers.GenericContainer
+            import org.testcontainers.gradle.getContainer
+            import org.testcontainers.containers.wait.strategy.Wait
             import java.net.URL
 
             plugins {
@@ -413,7 +419,7 @@ class TestcontainersPluginTest {
                 dependsOn("startWebContainer")
                 usesService(testcontainers.service)
                 doLast {
-                    val web = testcontainers.getGenericContainer("web").get()
+                    val web = testcontainers.getContainer<GenericContainer<*>>("web").get()
                     val host = web.host
                     val port = web.firstMappedPort
                     val url = URL("http://" + host + ":" + port + "/")
@@ -511,7 +517,8 @@ class TestcontainersPluginTest {
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin")
         val kts = """
-            import org.testcontainers.gradle.getJdbcDatabaseContainer
+            import org.testcontainers.containers.JdbcDatabaseContainer
+            import org.testcontainers.gradle.getContainer
 
             plugins {
                 id("org.testcontainers")
@@ -538,7 +545,7 @@ class TestcontainersPluginTest {
                 dependsOn("startDbContainer")
                 usesService(testcontainers.service)
                 doLast {
-                    val db = testcontainers.getJdbcDatabaseContainer("db").get()
+                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
                     println("RESOLVED_IMAGE=" + db.dockerImageName)
                     println("DB_URL=" + db.jdbcUrl)
                 }
@@ -576,7 +583,8 @@ class TestcontainersPluginTest {
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin")
         val kts = """
-            import org.testcontainers.gradle.getGenericContainer
+            import org.testcontainers.containers.GenericContainer
+            import org.testcontainers.gradle.getContainer
 
             plugins {
                 id("org.testcontainers")
@@ -593,7 +601,7 @@ class TestcontainersPluginTest {
                 dependsOn("startRedisContainer")
                 usesService(testcontainers.service)
                 doLast {
-                    val redis = testcontainers.getGenericContainer("redis").get()
+                    val redis = testcontainers.getContainer<GenericContainer<*>>("redis").get()
                     println("RESOLVED_IMAGE=" + redis.dockerImageName)
                 }
             }
@@ -670,7 +678,8 @@ class TestcontainersPluginTest {
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin")
         val kts = """
-            import org.testcontainers.gradle.getJdbcDatabaseContainer
+            import org.testcontainers.containers.JdbcDatabaseContainer
+            import org.testcontainers.gradle.getContainer
 
             plugins {
                 id("org.testcontainers")
@@ -686,7 +695,7 @@ class TestcontainersPluginTest {
                 dependsOn("startWebContainer")
                 usesService(testcontainers.service)
                 doLast {
-                    val db = testcontainers.getJdbcDatabaseContainer("web").get()
+                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("web").get()
                     println("RESOLVED_DB=" + db)
                 }
             }
