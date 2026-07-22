@@ -3,7 +3,7 @@ import org.testcontainers.gradle.DatabaseType
 import org.testcontainers.gradle.getContainer
 
 plugins {
-    id("org.testcontainers") version "1.0.0-SNAPSHOT"
+    id("io.github.regulskimichal.testcontainers") version "0.1.0-SNAPSHOT"
 }
 
 testcontainers {

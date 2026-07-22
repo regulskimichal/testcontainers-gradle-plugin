@@ -15,7 +15,7 @@ plugins {
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("net.ltgt.jooq-kotlin") version "1.0.0"
-    id("org.testcontainers") version "1.0.0-SNAPSHOT"
+    id("io.github.regulskimichal.testcontainers") version "0.1.0-SNAPSHOT"
     id("net.ltgt.flyway") version "1.0.0"
 }
 
