@@ -2,10 +2,12 @@ import net.ltgt.gradle.flyway.tasks.FlywayMigrate
 import net.ltgt.gradle.jooq.tasks.JooqCodegen
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.run.BootRun
+import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.gradle.DatabaseType
 import org.testcontainers.gradle.StartContainersTask
-import org.testcontainers.gradle.TestcontainersBuildService
-import org.testcontainers.gradle.getJdbcDatabaseContainer
+import org.testcontainers.gradle.getContainer
+import org.testcontainers.gradle.wasContainerStarted
+
 
 plugins {
     kotlin("jvm") version "2.4.0"
@@ -28,7 +30,7 @@ java {
 
 dependencies {
     // jOOQ codegen classpath
-    "jooqCodegen"("org.jooq:jooq-codegen:3.21.5")
+    "jooqCodegen"("org.jooq:jooq-codegen")
     "jooqCodegen"("org.postgresql:postgresql")
 
     // Dynamic classpath for our generic Testcontainers Gradle plugin
@@ -59,27 +61,13 @@ testcontainers {
 }
 
 val dbMigrationDir = provider { layout.projectDirectory.dir("src/main/resources/db/migration") }
-val migrationMarkerFile = layout.buildDirectory.file("flyway/migration.marker")
 
-// startPostgresContainer and stopPostgresContainer are registered dynamically by the plugin
-// in afterEvaluate, so they must be configured in afterEvaluate as well.
-// Declaring the migration directory as trackedFiles enables Gradle's built-in UP-TO-DATE
-// detection — the container start (and all downstream tasks) is skipped automatically
-// when no SQL migration files have changed.
+// startPostgresContainer is registered dynamically by the plugin in afterEvaluate,
+// so project-specific inputs (trackedFiles) must also be set in afterEvaluate.
+// The plugin automatically handles mustRunAfter(clean), usesService and onlyIf for stopPostgresContainer.
 afterEvaluate {
-    // Assign to a local val to avoid capturing the extension reference (this$0) in closures,
-    // which would break Configuration Cache serialization.
-    val tcService = testcontainers.service
-
     tasks.named<StartContainersTask>("startPostgresContainer") {
-        mustRunAfter(tasks.matching { it.name == "clean" })
         trackedFiles.from(dbMigrationDir)
-        markerFile.set(migrationMarkerFile)
-    }
-
-    tasks.named("stopPostgresContainer") {
-        usesService(tcService)
-        onlyIf { (tcService.get() as TestcontainersBuildService).wasContainerStarted("postgres") }
     }
 }
 
@@ -88,9 +76,10 @@ val flywayMigrate = tasks.named<FlywayMigrate>("flywayMigrate") {
     // when no database migrations are needed. StartContainersTask tracks migration file changes
     // via Gradle's built-in UP-TO-DATE mechanism (trackedFiles + markerFile).
     dependsOn("startPostgresContainer")
-    val postgresProvider = testcontainers.getJdbcDatabaseContainer("postgres")
+    val postgresProvider = testcontainers.getContainer<JdbcDatabaseContainer<*>>("postgres")
 
-    // Assign to a local val to avoid capturing the outer script class in the onlyIf closure.
+    // Assign to a local val to avoid capturing the outer script class in the onlyIf closure
+    // (Configuration Cache requirement).
     val service = testcontainers.service
     usesService(service)
 
@@ -102,7 +91,7 @@ val flywayMigrate = tasks.named<FlywayMigrate>("flywayMigrate") {
     // Since FlywayMigrate is untracked by Gradle (it modifies an external database),
     // it never becomes UP-TO-DATE natively. We skip it when the container was not started —
     // meaning migration files haven't changed since the last successful build.
-    onlyIf { (service.get() as TestcontainersBuildService).wasContainerStarted("postgres") }
+    onlyIf { service.wasContainerStarted("postgres") }
 }
 
 val jooqCodegenXml = layout.buildDirectory.file("jooq/jooq-codegen.xml")
@@ -146,9 +135,11 @@ val jooqCodegen = tasks.named<JooqCodegen>("jooq") {
     dependsOn(flywayMigrate)
     finalizedBy("stopPostgresContainer")
 
+    // Assign to a local val to avoid capturing the outer script class in the onlyIf closure
+    // (Configuration Cache requirement).
     val service = testcontainers.service
     usesService(service)
-    val postgresProvider = testcontainers.getJdbcDatabaseContainer("postgres")
+    val postgresProvider = testcontainers.getContainer<JdbcDatabaseContainer<*>>("postgres")
 
     configurationFile = jooqCodegenXml
     url = postgresProvider.map { it.jdbcUrl }
@@ -160,7 +151,7 @@ val jooqCodegen = tasks.named<JooqCodegen>("jooq") {
 
     // JooqCodegen is also untracked. We execute it only if migrations ran (container started),
     // otherwise the database schema is unchanged and the existing generated sources are valid.
-    onlyIf { (service.get() as TestcontainersBuildService).wasContainerStarted("postgres") }
+    onlyIf { service.wasContainerStarted("postgres") }
 }
 
 kotlin {

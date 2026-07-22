@@ -6,17 +6,44 @@ import org.testcontainers.gradle.spec.GenericContainerSpec
 import org.testcontainers.gradle.spec.JdbcContainerSpec
 import java.io.File
 
+/**
+ * Base configuration class for registering container definitions.
+ *
+ * This is the internal implementation of the `testcontainers { }` DSL and provides
+ * methods for registering different container types:
+ * - JDBC databases: [jdbcContainer] for type-safe database registration
+ * - Generic containers: [genericContainer] for custom Docker images
+ * - Docker Compose: [composeContainer] for multi-container setups
+ *
+ * All registered containers are started via auto-generated `start*Container` tasks
+ * and stopped via auto-generated `stop*Container` tasks.
+ *
+ * @see TestcontainersExtension for the public DSL
+ * @see ContainerDefinition for the serializable representation
+ */
 open class TestcontainersConfig(
     private val layout: ProjectLayout
 ) {
+    @PublishedApi
     internal val definitions = mutableMapOf<String, ContainerDefinition>()
 
     /**
-     * Registers a JDBC database container.
+     * Registers a JDBC database container from a database type string identifier.
      *
-     * @param name The unique name of the container definition.
-     * @param databaseType The string identifier of the database (e.g., "postgresql", "mysql"). See more at: https://java.testcontainers.org/modules/databases/jdbc/
-     * @param configure The configuration block for setting container properties on [JdbcContainerSpec].
+     * This method supports arbitrary database type strings and resolves them to canonical Docker image names
+     * (e.g., "postgresql" → "postgres:latest"). Use the type-safe overload [jdbcContainer(String, DatabaseType, Function)]
+     * to prevent configuration errors.
+     *
+     * @param name The unique container identifier used for task names (e.g., "postgres" generates
+     *             `startPostgresContainer` and `stopPostgresContainer` tasks).
+     * @param databaseType The database type string (e.g., "postgresql", "mysql", "oracle").
+     *                      Resolves to canonical image names via [resolveCanonicalImageName].
+     * @param configure The configuration lambda for setting database credentials, ports, and image details.
+     *
+     * @throws IllegalArgumentException if the databaseType cannot be resolved to a canonical image.
+     *
+     * @see DatabaseType for available type-safe enum constants
+     * @see resolveCanonicalImageName for supported type strings
      */
     fun jdbcContainer(
         name: String,
@@ -41,11 +68,27 @@ open class TestcontainersConfig(
 
     /**
      * Registers a JDBC database container using a type-safe [DatabaseType] enum.
-     * **Preferred** over the string-based version to prevent configuration typos.
      *
-     * @param name The unique name of the container definition.
-     * @param databaseType The supported [DatabaseType] enum (e.g., [DatabaseType.POSTGRESQL]).
-     * @param configure The configuration block for setting container properties on [JdbcContainerSpec].
+     * **Preferred** over the string-based version to prevent typos and provide IDE autocomplete.
+     * Type-safe enums ensure you're using a supported database type with the correct Docker image.
+     *
+     * Example:
+     * ```kotlin
+     * jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
+     *     databaseName("testdb")
+     *     username("user")
+     *     password("pass")
+     *     portMapping(5432)
+     * }
+     * ```
+     *
+     * @param name The unique container identifier used for task names (e.g., "postgres" generates
+     *             `startPostgresContainer` and `stopPostgresContainer` tasks).
+     * @param databaseType The [DatabaseType] enum constant (e.g., [DatabaseType.POSTGRESQL], [DatabaseType.MYSQL]).
+     * @param configure The configuration lambda on [JdbcContainerSpec] for credentials, ports, and image overrides.
+     *
+     * @see DatabaseType for all supported databases
+     * @see JdbcContainerSpec for available configuration options
      */
     fun jdbcContainer(
         name: String,
@@ -56,10 +99,34 @@ open class TestcontainersConfig(
     }
 
     /**
-     * Registers a generic single-container definition.
+     * Registers a generic Docker container for any image not covered by specialized container types.
      *
-     * @param name The unique name of the container definition.
-     * @param configure The configuration block for setting generic container properties on [GenericContainerSpec].
+     * Useful for services like Redis, Kafka, PostgreSQL (with custom image), or any public Docker image.
+     * Supports environment variables, port mappings, volume mounts, and wait strategies.
+     *
+     * Example:
+     * ```kotlin
+     * genericContainer("redis") {
+     *     image("redis:7-alpine")
+     *     exposedPorts(6379)
+     *     waitPort()
+     * }
+     *
+     * genericContainer("dynamodb") {
+     *     image("amazon/dynamodb-local:latest")
+     *     exposedPorts(8000)
+     *     env("AWS_ACCESS_KEY_ID" to "testing", "AWS_SECRET_ACCESS_KEY" to "testing")
+     *     waitHttp("/", 400)  // DynamoDB returns 400 on /
+     * }
+     * ```
+     *
+     * @param name The unique container identifier used for task names (e.g., "redis" generates
+     *             `startRedisContainer` and `stopRedisContainer` tasks).
+     * @param configure The configuration lambda on [GenericContainerSpec] for image, ports, environment, and wait strategy.
+     *
+     * @throws IllegalArgumentException if no image is specified in the configuration.
+     *
+     * @see GenericContainerSpec for available configuration options
      */
     fun genericContainer(name: String, configure: GenericContainerSpec.() -> Unit) {
         val spec = GenericContainerSpec().apply(configure)
@@ -108,9 +175,41 @@ open class TestcontainersConfig(
     /**
      * Registers a Docker Compose multi-container setup.
      *
-     * @param name The unique name of the compose stack definition.
-     * @param filePath The path to the Docker Compose configuration file (can be a [File], path string, etc.).
-     * @param configure The configuration block for exposing compose services on [ComposeContainerSpec].
+     * Manages one or more services defined in a Docker Compose file. The plugin automatically
+     * starts the entire stack before dependent tasks and stops all services after the build completes.
+     *
+     * Example `compose.yaml`:
+     * ```yaml
+     * services:
+     *   postgres:
+     *     image: postgres:15
+     *     environment:
+     *       POSTGRES_PASSWORD: password
+     *     ports:
+     *       - "5432:5432"
+     *   redis:
+     *     image: redis:7-alpine
+     *     ports:
+     *       - "6379:6379"
+     * ```
+     *
+     * Configuration in build.gradle.kts:
+     * ```kotlin
+     * composeContainer("stack", "compose.yaml") {
+     *     service("postgres", 5432)
+     *     service("redis", 6379)
+     *     startupTimeoutSeconds(30)
+     * }
+     * ```
+     *
+     * @param name The unique stack identifier (e.g., "stack" generates `startStackContainer` and `stopStackContainer`).
+     * @param filePath The path to the Docker Compose file (can be a [File], path string, or Gradle file).
+     *                  Relative paths are resolved from the project directory.
+     * @param configure The configuration lambda on [ComposeContainerSpec] for exposing services and setting timeouts.
+     *
+     * @throws IllegalArgumentException if no services are exposed via [ComposeContainerSpec.service].
+     *
+     * @see ComposeContainerSpec for service exposure and timeout configuration
      */
     fun composeContainer(
         name: String,
