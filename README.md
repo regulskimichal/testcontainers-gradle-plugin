@@ -26,7 +26,7 @@ Add the plugin to your `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    id("org.testcontainers") version "<VERSION>"
+    id("io.github.regulskimichal.testcontainers") version "<VERSION>"
 }
 ```
 
@@ -114,26 +114,26 @@ testcontainers {
 
 #### Supported Database Types (`DatabaseType`):
 
-| Enum Constant | Identifier (`id`) | Canonical Image Name |
-| :--- | :--- | :--- |
-| `CLICKHOUSE` | `"clickhouse"` | `clickhouse/clickhouse-server` |
-| `COCKROACHDB` | `"cockroach"` | `cockroachdb/cockroach` |
-| `CRATEDB` | `"cratedb"` | `crate` |
-| `DB2` | `"db2"` | `ibmcom/db2` |
-| `MARIADB` | `"mariadb"` | `mariadb` |
-| `MYSQL` | `"mysql"` | `mysql` |
-| `MSSQL` | `"sqlserver"` | `mcr.microsoft.com/mssql/server` |
-| `OCEANBASE` | `"oceanbasece"` | `oceanbase/oceanbase-ce` |
-| `ORACLE` | `"oracle"` | `gvenzl/oracle-free` |
-| `POSTGIS` | `"postgis"` | `postgis/postgis` |
-| `POSTGRESQL` | `"postgresql"` | `postgres` |
-| `QUESTDB` | `"questdb"` | `questdb/questdb` |
-| `TIMESCALEDB` | `"timescaledb"` | `timescale/timescaledb` |
-| `PGVECTOR` | `"pgvector"` | `pgvector/pgvector` |
-| `TIDB` | `"tidb"` | `pingcap/tidb` |
-| `TIMEPLUS` | `"timeplus"` | `timeplus/timeplus` |
-| `TRINO` | `"trino"` | `trinodb/trino` |
-| `YUGABYTEDB` | `"yugabyte"` | `yugabytedb/yugabyte` |
+| Enum Constant | Identifier (`id`) | Canonical Image Name             |
+|:--------------|:------------------|:---------------------------------|
+| `CLICKHOUSE`  | `"clickhouse"`    | `clickhouse/clickhouse-server`   |
+| `COCKROACHDB` | `"cockroach"`     | `cockroachdb/cockroach`          |
+| `CRATEDB`     | `"cratedb"`       | `crate`                          |
+| `DB2`         | `"db2"`           | `ibmcom/db2`                     |
+| `MARIADB`     | `"mariadb"`       | `mariadb`                        |
+| `MYSQL`       | `"mysql"`         | `mysql`                          |
+| `MSSQL`       | `"sqlserver"`     | `mcr.microsoft.com/mssql/server` |
+| `OCEANBASE`   | `"oceanbasece"`   | `oceanbase/oceanbase-ce`         |
+| `ORACLE`      | `"oracle"`        | `gvenzl/oracle-free`             |
+| `POSTGIS`     | `"postgis"`       | `postgis/postgis`                |
+| `POSTGRESQL`  | `"postgresql"`    | `postgres`                       |
+| `QUESTDB`     | `"questdb"`       | `questdb/questdb`                |
+| `TIMESCALEDB` | `"timescaledb"`   | `timescale/timescaledb`          |
+| `PGVECTOR`    | `"pgvector"`      | `pgvector/pgvector`              |
+| `TIDB`        | `"tidb"`          | `pingcap/tidb`                   |
+| `TIMEPLUS`    | `"timeplus"`      | `timeplus/timeplus`              |
+| `TRINO`       | `"trino"`         | `trinodb/trino`                  |
+| `YUGABYTEDB`  | `"yugabyte"`      | `yugabytedb/yugabyte`            |
 
 #### `JdbcContainerSpec` Options:
 

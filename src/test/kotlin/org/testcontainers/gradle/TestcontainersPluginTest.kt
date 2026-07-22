@@ -35,7 +35,7 @@ class TestcontainersPluginTest {
             import org.testcontainers.gradle.getContainer
 
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -126,7 +126,7 @@ class TestcontainersPluginTest {
             import org.testcontainers.gradle.getContainer
 
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -191,7 +191,7 @@ class TestcontainersPluginTest {
         @Language("kotlin")
         val kts = """
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -244,7 +244,7 @@ class TestcontainersPluginTest {
         @Language("kotlin")
         val kts = """
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -293,11 +293,11 @@ class TestcontainersPluginTest {
         @Language("kotlin")
         val kts = """
             plugins {
-                id("org.testcontainers") apply false
+                id("io.github.regulskimichal.testcontainers") apply false
             }
             
             subprojects {
-                apply(plugin = "org.testcontainers")
+                apply(plugin = "io.github.regulskimichal.testcontainers")
 
                 repositories {
                     mavenCentral()
@@ -403,7 +403,7 @@ class TestcontainersPluginTest {
             import java.net.URL
 
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -460,7 +460,7 @@ class TestcontainersPluginTest {
         @Language("kotlin")
         val kts = """
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -521,7 +521,7 @@ class TestcontainersPluginTest {
             import org.testcontainers.gradle.getContainer
 
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -587,7 +587,7 @@ class TestcontainersPluginTest {
             import org.testcontainers.gradle.getContainer
 
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -638,7 +638,7 @@ class TestcontainersPluginTest {
         @Language("kotlin")
         val kts = """
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {
@@ -682,7 +682,7 @@ class TestcontainersPluginTest {
             import org.testcontainers.gradle.getContainer
 
             plugins {
-                id("org.testcontainers")
+                id("io.github.regulskimichal.testcontainers")
             }
 
             testcontainers {

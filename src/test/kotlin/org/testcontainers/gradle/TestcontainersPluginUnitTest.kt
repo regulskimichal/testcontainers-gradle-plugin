@@ -15,7 +15,7 @@ class TestcontainersPluginUnitTest {
         val project = ProjectBuilder.builder().build()
 
         // Apply the plugin under test
-        project.plugins.apply("org.testcontainers")
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         // Configure Postgres container via the plugin's DSL extension
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
@@ -59,7 +59,7 @@ class TestcontainersPluginUnitTest {
     @Test
     fun `plugin registers start task without explicitly configuring optional parameters`() {
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("org.testcontainers")
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
         extension.jdbcContainer("postgresdb", DatabaseType.POSTGRESQL) {
@@ -82,7 +82,7 @@ class TestcontainersPluginUnitTest {
     @Test
     fun `plugin automatically resolves compatible substitute from database type`() {
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("org.testcontainers")
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
         extension.jdbcContainer("postgresdb", DatabaseType.POSTGRESQL) {
@@ -104,7 +104,7 @@ class TestcontainersPluginUnitTest {
     @Test
     fun `genericContainer validation fails when image is missing`() {
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("org.testcontainers")
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
@@ -119,7 +119,7 @@ class TestcontainersPluginUnitTest {
     @Test
     fun `composeContainer validation fails when no services are exposed`() {
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("org.testcontainers")
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
@@ -134,7 +134,7 @@ class TestcontainersPluginUnitTest {
     @Test
     fun `extension accessors throw error for unregistered container name`() {
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("org.testcontainers")
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
