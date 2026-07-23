@@ -33,7 +33,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Publish to Gradle Plugin Portal
         if: ${{ !env.ACT }}
