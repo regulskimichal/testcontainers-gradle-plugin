@@ -1,6 +1,6 @@
 [versions]
 testcontainers = "2.0.5"
-kotlin = "2.4.0"
+kotlin = "2.4.10"
 junit = "6.1.2"
 pluginPublish = "2.1.1"
 dokka = "2.2.0"
