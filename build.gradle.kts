@@ -57,6 +57,10 @@ dependencies {
     testImplementation(libs.kotlin.test.junit5)
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }
@@ -65,4 +69,13 @@ val dokkaGeneratePublicationHtml = tasks.named("dokkaGeneratePublicationHtml")
 tasks.named<Jar>("javadocJar") {
     dependsOn(dokkaGeneratePublicationHtml)
     from(layout.buildDirectory.dir("dokka/html/publication"))
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isReproducibleFileOrder = true
+    isPreserveFileTimestamps = false
 }
