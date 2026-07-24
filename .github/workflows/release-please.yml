@@ -20,7 +20,6 @@ jobs:
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
-        continue-on-error: true
 
       - uses: googleapis/release-please-action@v5
         id: release
