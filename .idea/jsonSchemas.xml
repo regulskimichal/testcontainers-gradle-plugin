@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JsonSchemaMappingsProjectConfiguration">
+    <state>
+      <map>
+        <entry key="Detekt Config (detekt.yml)">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="Detekt Config (detekt.yml)" />
+              <option name="relativePathToSchema" value="https://www.schemastore.org/detekt-1.22.0.json" />
+              <option name="applicationDefined" value="true" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value="config/detekt/detekt.yml" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
+        <entry key="release-please-manifest.json">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="release-please-manifest.json" />
+              <option name="relativePathToSchema" value="https://raw.githubusercontent.com/googleapis/release-please/main/schemas/manifest.json" />
+              <option name="applicationDefined" value="true" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value=".release-please-manifest.json" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
+      </map>
+    </state>
+  </component>
+</project>
