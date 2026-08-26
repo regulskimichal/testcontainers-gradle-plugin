@@ -5,7 +5,7 @@ junit = "6.1.2"
 pluginPublish = "2.1.1"
 dokka = "2.2.0"
 detekt = "1.23.8"
-axionRelease = "1.21.2"
+axionRelease = "1.21.3"
 
 [libraries]
 testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
