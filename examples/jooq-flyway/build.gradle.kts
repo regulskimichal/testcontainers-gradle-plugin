@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.run.BootRun
 import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.gradle.DatabaseType
-import org.testcontainers.gradle.StartContainersTask
 import org.testcontainers.gradle.getContainer
 import org.testcontainers.gradle.wasContainerStarted
 
@@ -15,7 +14,7 @@ plugins {
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("net.ltgt.jooq-kotlin") version "1.0.0"
-    id("io.github.regulskimichal.testcontainers") version "0.1.0-SNAPSHOT"
+    id("io.github.regulskimichal.testcontainers") version "0.1.2-SNAPSHOT"
     id("net.ltgt.flyway") version "1.0.0"
 }
 
@@ -59,8 +58,8 @@ testcontainers {
         databaseName("postgres")
         username("postgres")
         password("postgres")
-        // Track database migration files for Gradle UP-TO-DATE checking directly in DSL
-        trackedFiles.from(dbMigrationDir)
+        // Track database migration files and build.gradle.kts for Gradle UP-TO-DATE checking directly in DSL
+        trackedFiles.from(dbMigrationDir, layout.projectDirectory.file("build.gradle.kts"))
     }
 }
 

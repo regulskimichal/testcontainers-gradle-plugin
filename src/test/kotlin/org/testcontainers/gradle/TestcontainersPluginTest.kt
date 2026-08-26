@@ -342,7 +342,12 @@ class TestcontainersPluginTest {
         @Language("kotlin") val settingsKts = """rootProject.name = "test-volume-mount""""
         settingsFile.writeText(settingsKts)
 
-        val htmlDir = File(testProjectDir, "html").apply { mkdirs() }
+        // Keep the bind source under the repository workspace. Colima does not expose
+        // JUnit's /var/folders temporary directory to its Docker VM.
+        val htmlDir = File(System.getProperty("user.dir"), "build/test-volume-mount-html").apply {
+            deleteRecursively()
+            mkdirs()
+        }
         val indexHtmlFile = File(htmlDir, "index.html")
         val uniqueContent = "Unique HTML content: ${java.util.UUID.randomUUID()}"
         indexHtmlFile.writeText(uniqueContent)

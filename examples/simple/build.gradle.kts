@@ -3,13 +3,12 @@ import org.testcontainers.gradle.DatabaseType
 import org.testcontainers.gradle.getContainer
 
 plugins {
-    id("io.github.regulskimichal.testcontainers") version "0.1.0-SNAPSHOT"
+    id("io.github.regulskimichal.testcontainers") version "0.1.2-SNAPSHOT"
 }
 
 testcontainers {
     jdbcContainer("db", DatabaseType.POSTGRESQL) {
         image("postgres:latest")
-
     }
 }
 
@@ -25,9 +24,12 @@ tasks.register("printDbInfo") {
 
     doFirst {
         val db = dbProvider.get()
-        println("SUCCESSFULLY CONFIGURED POSTGRES CONTAINER!")
-        println("JDBC URL: " + db.jdbcUrl)
-        println("Username: " + db.username)
-        println("Password: " + db.password)
+        logger.warn(
+            """
+            SUCCESSFULLY CONFIGURED POSTGRES CONTAINER!
+            JDBC URL: ${db.jdbcUrl}
+            Username: ${db.username}
+            Password: ${db.password}""".trimIndent()
+        )
     }
 }
