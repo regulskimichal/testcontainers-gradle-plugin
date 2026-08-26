@@ -68,7 +68,7 @@ the `testcontainersClasspath` configuration:
 
 ```kotlin
 dependencies {
-    "testcontainersClasspath"("org.testcontainers:postgresql:1.20.4")
+    "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
 }
 ```
 
