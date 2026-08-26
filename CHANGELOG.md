@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/regulskimichal/testcontainers-gradle-plugin/compare/v0.1.1...v0.2.0) (2026-08-26)
+
+
+### Features
+
+* add trackedFiles support for incremental container start tasks ([3af5227](https://github.com/regulskimichal/testcontainers-gradle-plugin/commit/3af5227d2fd1605292723825af5b50d34ef9b1c1))
+
+
+### Bug Fixes
+
+* **deps:** update dependency org.junit.jupiter:junit-jupiter to v6.1.3 ([d75dd91](https://github.com/regulskimichal/testcontainers-gradle-plugin/commit/d75dd91c28d46389825b9aa86e87aba27d8f6ee8))
+* **deps:** update dependency org.junit.jupiter:junit-jupiter to v6.1.3 ([06a0909](https://github.com/regulskimichal/testcontainers-gradle-plugin/commit/06a0909fe6b5e0b7028b47c0df424319dee62817))
+
 ## [0.1.1](https://github.com/regulskimichal/testcontainers-gradle-plugin/compare/v0.1.0...v0.1.1) (2026-07-24)
 
 
