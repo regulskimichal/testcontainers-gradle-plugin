@@ -1,5 +1,6 @@
 package org.testcontainers.gradle.spec
 
+import org.gradle.api.file.ConfigurableFileCollection
 import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import java.time.Duration
 
@@ -32,6 +33,7 @@ import java.time.Duration
  *     service("postgres", 5432)
  *     service("app", 8080)
  *     startupTimeoutSeconds(30)
+ *     trackedFiles.from("compose.yaml")
  * }
  * ```
  *
@@ -47,10 +49,14 @@ import java.time.Duration
  * }
  * ```
  *
+ * @param trackedFiles Files or directories to track for UP-TO-DATE checking
+ *
  * @see org.testcontainers.gradle.TestcontainersConfig.composeContainer for registration
  */
 @TestcontainersDslMarker
-class ComposeContainerSpec {
+class ComposeContainerSpec(
+    val trackedFiles: ConfigurableFileCollection
+) {
     private val _exposedServices = mutableMapOf<String, List<Int>>()
     /**
      * Exposed service mapping (serviceName -> list of ports).
@@ -61,6 +67,27 @@ class ComposeContainerSpec {
     val exposedServices: Map<String, List<Int>> get() = _exposedServices
 
     internal var startupTimeoutSeconds: Long = Duration.ofMinutes(1).seconds
+
+    /**
+     * Adds files or directories to track for UP-TO-DATE checking.
+     *
+     * When configured, the generated start container task is only executed if the tracked
+     * files have changed. If no files are tracked, the task always executes on each build.
+     *
+     * @param paths Variable number of file paths, directories, or Gradle file providers
+     */
+    fun trackedFiles(vararg paths: Any) {
+        trackedFiles.from(*paths)
+    }
+
+    /**
+     * Adds an iterable collection of files or directories to track for UP-TO-DATE checking.
+     *
+     * @param paths Iterable collection of file paths, directories, or Gradle file providers
+     */
+    fun trackedFiles(paths: Iterable<Any>) {
+        trackedFiles.from(paths)
+    }
 
     /**
      * Declares a service to expose from the Docker Compose stack.

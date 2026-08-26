@@ -50,6 +50,8 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
 }
 
+val dbMigrationDir = provider { layout.projectDirectory.dir("src/main/resources/db/migration") }
+
 // Declare required containers
 testcontainers {
     jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
@@ -57,16 +59,7 @@ testcontainers {
         databaseName("postgres")
         username("postgres")
         password("postgres")
-    }
-}
-
-val dbMigrationDir = provider { layout.projectDirectory.dir("src/main/resources/db/migration") }
-
-// startPostgresContainer is registered dynamically by the plugin in afterEvaluate,
-// so project-specific inputs (trackedFiles) must also be set in afterEvaluate.
-// The plugin automatically handles mustRunAfter(clean), usesService and onlyIf for stopPostgresContainer.
-afterEvaluate {
-    tasks.named<StartContainersTask>("startPostgresContainer") {
+        // Track database migration files for Gradle UP-TO-DATE checking directly in DSL
         trackedFiles.from(dbMigrationDir)
     }
 }

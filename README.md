@@ -12,13 +12,19 @@ A minimal, framework-agnostic Gradle plugin that manages container lifecycles fo
   - **JDBC Databases**: Type-safe relational database configuration via the [DatabaseType](file:///c:/Users/Michal/IdeaProjects/testcontainers-gradle-plugin/src/main/kotlin/org/testcontainers/gradle/DatabaseType.kt) enum (18+ supported databases) or flexible string-based resolution.
   - **Generic Containers**: Support for arbitrary Docker images (Redis, Kafka, DynamoDB, etc.) with custom environment variables, port exposures, volume mounts, and wait strategies (`waitPort()`, `waitHttp()`, `waitLog()`).
   - **Docker Compose Stacks**: Multi-container Docker Compose environments with service port exposure and startup timeouts.
-- **Incremental Build Integration & Task Skipping**: Built-in support for Gradle's UP-TO-DATE checks using `trackedFiles` and automatic marker files (`build/testcontainers/start<Name>.marker`). Skips starting containers and running downstream tasks when input files (e.g. migration scripts) are unchanged.
+- **Incremental Build Integration & Task Skęipping**: Built-in support for Gradle's UP-TO-DATE checks using `trackedFiles` and automatic marker files (`build/testcontainers/start<Name>.marker`). Skips starting containers and running downstream tasks when input files (e.g. migration scripts) are unchanged.
 - **Configuration Cache & Build Cache Ready**: Built with serializable container definitions and lazy Gradle `Provider` APIs for full Gradle Configuration Cache and Build Cache compatibility.
 - **Reflection-Safe Classloading**: Isolated dependency resolution via the `testcontainersClasspath` configuration allows loading custom database drivers and Testcontainers modules via `ServiceLoader` without polluting project buildscript classloaders.
 
 ---
 
 ## Getting Started
+
+> [!NOTE]
+> **macOS & Colima**: If you are using [Colima](https://github.com/abiosoft/colima) on macOS, it is strongly recommended to create a symlink to the Docker socket to ensure Testcontainers works properly:
+> ```bash
+> ln -s ~/.colima/default/docker.sock ~/.docker/run/docker.sock
+> ```
 
 ### 1. Apply the Plugin
 
@@ -143,6 +149,7 @@ testcontainers {
 - **`password(name)`**: Sets the database administrator password.
 - **`reuse(boolean)`**: Enables Testcontainers container reuse mode across build executions (default `false`).
 - **`portMapping(containerPort, hostPort = containerPort)`**: Binds a container port to a fixed host port. If omitted, Testcontainers assigns a dynamic available host port.
+- **`trackedFiles.from(...)`** / **`trackedFiles(...)`**: Tracks files or directories for Gradle UP-TO-DATE checking (e.g. migration scripts). When not configured, the container start task always executes on each build.
 
 ---
 
@@ -170,6 +177,7 @@ testcontainers {
 - **`env(vararg pairs)` / `env(map)`**: Sets environment variables passed to the container.
 - **`reuse(boolean)`**: Enables Testcontainers container reuse across builds.
 - **`startupTimeoutSeconds(seconds)`**: Maximum time in seconds to wait for container readiness (default `60`).
+- **`trackedFiles.from(...)`** / **`trackedFiles(...)`**: Tracks files or directories for Gradle UP-TO-DATE checking.
 - **Wait Strategies**:
   - **`waitPort()`**: Waits for exposed container ports to listen on TCP (default).
   - **`waitHttp(path, statusCode = 200)`**: Waits for an HTTP endpoint to respond with the expected status code (e.g., `waitHttp("/health", 200)`).
@@ -188,6 +196,7 @@ testcontainers {
         service("postgres", 5432)
         service("web", 8080)
         startupTimeoutSeconds(60)
+        trackedFiles.from("compose.yaml")
     }
 }
 ```
@@ -196,6 +205,7 @@ testcontainers {
 
 - **`service(serviceName, vararg ports)`**: Exposes specific container ports for a service defined in the compose file and waits for TCP readiness. At least one service must be explicitly exposed.
 - **`startupTimeoutSeconds(seconds)`**: Maximum time in seconds to wait for all exposed services to become ready (default `60`).
+- **`trackedFiles.from(...)`** / **`trackedFiles(...)`**: Tracks files or directories for Gradle UP-TO-DATE checking.
 
 ---
 
@@ -241,18 +251,21 @@ The `getContainer<T>("name")` extension function retrieves a `Provider<T>` for a
 
 ## Incremental Builds & Task Skipping
 
-The plugin supports incremental builds by integrating `StartContainersTask` with Gradle's UP-TO-DATE checks.
+The plugin supports incremental builds by integrating `StartContainersTask` with Gradle's UP-TO-DATE checks:
 
-When inputs (such as Flyway/Liquibase `.sql` migration files) have not changed, `StartContainersTask` is marked UP-TO-DATE and skipped. Downstream tasks can check `testcontainers.service.wasContainerStarted("name")` in their `onlyIf` block to skip execution when no container startup occurred.
+- **Always Run by Default**: When no `trackedFiles` are configured, `StartContainersTask` executes on every build, ensuring containers are started whenever needed.
+- **Incremental on Demand**: When `trackedFiles` are configured (either directly in the `testcontainers { }` DSL or on the task), Gradle checks input files against output marker files. If tracked files have not changed, `StartContainersTask` is marked `UP-TO-DATE` and skipped.
+- **Conditional Downstream Tasks**: Downstream tasks can check `testcontainers.service.wasContainerStarted("name")` in their `onlyIf` block to skip execution when no container startup occurred.
 
 ### Complete Example (Flyway + jOOQ Codegen):
 
 ```kotlin
 import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.gradle.DatabaseType
-import org.testcontainers.gradle.StartContainersTask
 import org.testcontainers.gradle.getContainer
 import org.testcontainers.gradle.wasContainerStarted
+
+val dbMigrationDir = provider { layout.projectDirectory.dir("src/main/resources/db/migration") }
 
 testcontainers {
     jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
@@ -260,14 +273,7 @@ testcontainers {
         databaseName("testdb")
         username("postgres")
         password("postgres")
-    }
-}
-
-val dbMigrationDir = provider { layout.projectDirectory.dir("src/main/resources/db/migration") }
-
-// Configure trackedFiles on the start task inside afterEvaluate
-afterEvaluate {
-    tasks.named<StartContainersTask>("startPostgresContainer") {
+        // Enable UP-TO-DATE checking based on migration SQL files:
         trackedFiles.from(dbMigrationDir)
     }
 }

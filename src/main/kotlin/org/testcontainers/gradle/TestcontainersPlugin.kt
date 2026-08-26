@@ -78,6 +78,10 @@ class TestcontainersPlugin : Plugin<Project> {
                     mustRunAfter(project.tasks.matching { it.name == "clean" })
                     // Automatically configure a default marker file to support UP-TO-DATE checks.
                     markerFile.set(project.layout.buildDirectory.file("testcontainers/start${sanitizedName}.marker"))
+                    val dslTrackedFiles = ext.config.getTrackedFiles(containerName)
+                    if (dslTrackedFiles != null) {
+                        trackedFiles.from(dslTrackedFiles)
+                    }
                 }
 
                 project.tasks.register<StopContainersTask>("stop${sanitizedName}Container") {

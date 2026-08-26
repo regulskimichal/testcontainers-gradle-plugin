@@ -176,4 +176,96 @@ class TestcontainersPluginUnitTest {
         // Test invalid/unknown database type
         kotlin.test.assertNull(resolveCanonicalImageName("unknown-db"))
     }
+
+    @Test
+    fun `plugin wires trackedFiles from jdbcContainer DSL to start task`() {
+        // Given
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
+
+        val dummyFile = project.layout.projectDirectory.file("migrations/V1.sql").asFile
+        val extension = project.extensions.getByType(TestcontainersExtension::class.java)
+        extension.jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
+            trackedFiles.from(dummyFile)
+        }
+
+        // When
+        (project as org.gradle.api.internal.project.ProjectInternal).evaluate()
+
+        // Then
+        val startTask = project.tasks.findByName("startPostgresContainer") as? StartContainersTask
+        assertNotNull(startTask)
+        assertTrue(startTask.trackedFiles.files.contains(dummyFile))
+    }
+
+    @Test
+    fun `plugin wires trackedFiles from genericContainer DSL to start task`() {
+        // Given
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
+
+        val dummyFile = project.layout.projectDirectory.file("config/app.conf").asFile
+        val extension = project.extensions.getByType(TestcontainersExtension::class.java)
+        extension.genericContainer("redis") {
+            image("redis:alpine")
+            trackedFiles(dummyFile)
+        }
+
+        // When
+        (project as org.gradle.api.internal.project.ProjectInternal).evaluate()
+
+        // Then
+        val startTask = project.tasks.findByName("startRedisContainer") as? StartContainersTask
+        assertNotNull(startTask)
+        assertTrue(startTask.trackedFiles.files.contains(dummyFile))
+    }
+
+    @Test
+    fun `plugin wires trackedFiles from composeContainer DSL to start task`() {
+        // Given
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
+
+        val dummyCompose = project.layout.projectDirectory.file("compose.yaml").asFile
+        val dummyOverride = project.layout.projectDirectory.file("compose.override.yaml").asFile
+        val extension = project.extensions.getByType(TestcontainersExtension::class.java)
+        extension.composeContainer("stack", dummyCompose) {
+            service("app", 8080)
+            trackedFiles(dummyOverride)
+        }
+
+        // When
+        (project as org.gradle.api.internal.project.ProjectInternal).evaluate()
+
+        // Then
+        val startTask = project.tasks.findByName("startStackContainer") as? StartContainersTask
+        assertNotNull(startTask)
+        assertTrue(startTask.trackedFiles.files.contains(dummyOverride))
+    }
+
+    @Test
+    fun `start task has empty trackedFiles by default and supports manual task configuration`() {
+        // Given
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply("io.github.regulskimichal.testcontainers")
+
+        val extension = project.extensions.getByType(TestcontainersExtension::class.java)
+        extension.jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
+            // no tracked files in DSL
+        }
+
+        // When
+        (project as org.gradle.api.internal.project.ProjectInternal).evaluate()
+
+        val startTask = project.tasks.findByName("startPostgresContainer") as? StartContainersTask
+        assertNotNull(startTask)
+        assertTrue(startTask.trackedFiles.isEmpty, "trackedFiles should be empty by default")
+
+        // Backwards compatibility: configure trackedFiles directly on the task
+        val manualFile = project.layout.projectDirectory.file("manual-migrations/V1.sql").asFile
+        startTask.trackedFiles.from(manualFile)
+
+        // Then
+        assertTrue(startTask.trackedFiles.files.contains(manualFile))
+    }
 }
