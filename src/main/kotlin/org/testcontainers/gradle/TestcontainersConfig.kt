@@ -1,6 +1,8 @@
 package org.testcontainers.gradle
 
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.ProjectLayout
+import org.gradle.api.model.ObjectFactory
 import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import org.testcontainers.gradle.spec.ComposeContainerSpec
 import org.testcontainers.gradle.spec.GenericContainerSpec
@@ -24,10 +26,12 @@ import java.io.File
  */
 @TestcontainersDslMarker
 open class TestcontainersConfig(
-    private val layout: ProjectLayout
+    private val layout: ProjectLayout,
+    private val objects: ObjectFactory
 ) {
     @PublishedApi
     internal val definitions = mutableMapOf<String, ContainerDefinition>()
+    internal val trackedFilesMap = mutableMapOf<String, ConfigurableFileCollection>()
 
     /**
      * Registers a JDBC database container from a database type string identifier.
@@ -53,7 +57,7 @@ open class TestcontainersConfig(
         configure: JdbcContainerSpec.() -> Unit
     ) {
         val defaultSub = resolveCanonicalImageName(databaseType)
-        val spec = JdbcContainerSpec(defaultSub).apply(configure)
+        val spec = JdbcContainerSpec(objects.fileCollection(), defaultSub).apply(configure)
         definitions[name] = ContainerDefinition.JdbcDatabase(
             name = name,
             databaseType = databaseType,
@@ -66,6 +70,7 @@ open class TestcontainersConfig(
                 ContainerDefinition.PortMapping(it.hostPort, it.containerPort)
             }
         )
+        trackedFilesMap[name] = spec.trackedFiles
     }
 
     /**
@@ -131,7 +136,7 @@ open class TestcontainersConfig(
      * @see GenericContainerSpec for available configuration options
      */
     fun genericContainer(name: String, configure: GenericContainerSpec.() -> Unit) {
-        val spec = GenericContainerSpec().apply(configure)
+        val spec = GenericContainerSpec(objects.fileCollection()).apply(configure)
         val resolvedMounts = spec.volumeMounts.map { mountSpec ->
             val hostPath = mountSpec.hostPath
             val hostAbsolutePath = when (hostPath) {
@@ -173,6 +178,7 @@ open class TestcontainersConfig(
             startupTimeoutSeconds = spec.startupTimeoutSeconds,
             volumeMounts = resolvedMounts
         )
+        trackedFilesMap[name] = spec.trackedFiles
     }
 
     /**
@@ -219,7 +225,7 @@ open class TestcontainersConfig(
         filePath: Any,
         configure: ComposeContainerSpec.() -> Unit = {}
     ) {
-        val spec = ComposeContainerSpec().apply(configure)
+        val spec = ComposeContainerSpec(objects.fileCollection()).apply(configure)
         spec.validate(name)
         val absolutePath = when (filePath) {
             is File -> filePath.absolutePath
@@ -231,9 +237,14 @@ open class TestcontainersConfig(
             exposedServices = spec.exposedServices,
             startupTimeoutSeconds = spec.startupTimeoutSeconds
         )
+        trackedFilesMap[name] = spec.trackedFiles
     }
 
     internal fun resolveDefinitions(): List<ContainerDefinition> {
         return definitions.values.toList()
+    }
+
+    internal fun getTrackedFiles(name: String): ConfigurableFileCollection? {
+        return trackedFilesMap[name]
     }
 }

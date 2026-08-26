@@ -1,6 +1,7 @@
 package org.testcontainers.gradle
 
 import org.gradle.api.file.ProjectLayout
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Provider
 import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import javax.inject.Inject
@@ -20,6 +21,7 @@ import javax.inject.Inject
  *     jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
  *         databaseName("mydb")
  *         portMapping(5432)
+ *         trackedFiles.from("src/main/resources/db/migration")
  *     }
  *     genericContainer("redis") {
  *         image("redis:7-alpine")
@@ -33,8 +35,9 @@ import javax.inject.Inject
  */
 @TestcontainersDslMarker
 abstract class TestcontainersExtension @Inject constructor(
-    layout: ProjectLayout
-) : TestcontainersConfig(layout) {
+    layout: ProjectLayout,
+    objects: ObjectFactory
+) : TestcontainersConfig(layout, objects) {
 
     @PublishedApi
     internal val config: TestcontainersConfig get() = this

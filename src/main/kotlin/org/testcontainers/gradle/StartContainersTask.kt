@@ -48,6 +48,12 @@ import org.testcontainers.lifecycle.Startable
 @DisableCachingByDefault(because = "Starts external containers")
 abstract class StartContainersTask : DefaultTask() {
 
+    init {
+        // Only enable UP-TO-DATE checking if tracked files are explicitly configured.
+        // If trackedFiles is empty, the task will always execute to ensure containers start.
+        outputs.upToDateWhen { !trackedFiles.isEmpty }
+    }
+
     /**
      * Container definitions to start.
      * Automatically populated by the plugin during task registration.

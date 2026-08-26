@@ -10,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
 @RequiresDocker
+@Suppress("LargeClass")
 class TestcontainersPluginTest {
 
     @TempDir
@@ -341,7 +342,12 @@ class TestcontainersPluginTest {
         @Language("kotlin") val settingsKts = """rootProject.name = "test-volume-mount""""
         settingsFile.writeText(settingsKts)
 
-        val htmlDir = File(testProjectDir, "html").apply { mkdirs() }
+        // Keep the bind source under the repository workspace. Colima does not expose
+        // JUnit's /var/folders temporary directory to its Docker VM.
+        val htmlDir = File(System.getProperty("user.dir"), "build/test-volume-mount-html").apply {
+            deleteRecursively()
+            mkdirs()
+        }
         val indexHtmlFile = File(htmlDir, "index.html")
         val uniqueContent = "Unique HTML content: ${java.util.UUID.randomUUID()}"
         indexHtmlFile.writeText(uniqueContent)
@@ -619,5 +625,183 @@ class TestcontainersPluginTest {
 
         // Then
         assertTrue(result.output.contains("ClassCastException") || result.output.contains("cannot be cast to"))
+    }
+
+    @Test
+    fun `start task executes on every build when trackedFiles are not configured`() {
+        // Given
+        val settingsFile = File(testProjectDir, "settings.gradle.kts")
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-always-run""""
+        settingsFile.writeText(settingsKts)
+
+        val buildFile = File(testProjectDir, "build.gradle.kts")
+        @Language("kotlin") val kts = """
+            plugins {
+                id("io.github.regulskimichal.testcontainers")
+            }
+
+            testcontainers {
+                jdbcContainer("db", "postgresql") {
+                    image("postgres:17-alpine")
+                }
+            }
+
+            repositories {
+                mavenCentral()
+            }
+
+            dependencies {
+                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
+            }
+        """.trimIndent()
+        buildFile.writeText(kts)
+
+        // When (First execution)
+        val firstResult = GradleRunner.create()
+            .withProjectDir(testProjectDir)
+            .withPluginClasspath()
+            .withArguments("startDbContainer")
+            .build()
+
+        // Then
+        assertEquals(TaskOutcome.SUCCESS, firstResult.task(":startDbContainer")?.outcome)
+
+        // When (Second execution - without tracked files, it MUST execute again)
+        val secondResult = GradleRunner.create()
+            .withProjectDir(testProjectDir)
+            .withPluginClasspath()
+            .withArguments("startDbContainer")
+            .build()
+
+        // Then
+        assertEquals(TaskOutcome.SUCCESS, secondResult.task(":startDbContainer")?.outcome)
+    }
+
+    @Test
+    fun `start task is UP-TO-DATE on subsequent builds when DSL trackedFiles are unchanged`() {
+        // Given
+        val settingsFile = File(testProjectDir, "settings.gradle.kts")
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-dsl-uptodate""""
+        settingsFile.writeText(settingsKts)
+
+        val migrationsDir = File(testProjectDir, "src/main/resources/db/migration").apply { mkdirs() }
+        val migrationFile = File(migrationsDir, "V1__init.sql")
+        migrationFile.writeText("CREATE TABLE users (id SERIAL PRIMARY KEY);")
+
+        val buildFile = File(testProjectDir, "build.gradle.kts")
+        @Language("kotlin") val kts = """
+            plugins {
+                id("io.github.regulskimichal.testcontainers")
+            }
+
+            testcontainers {
+                jdbcContainer("db", "postgresql") {
+                    image("postgres:17-alpine")
+                    trackedFiles.from("src/main/resources/db/migration")
+                }
+            }
+
+            repositories {
+                mavenCentral()
+            }
+
+            dependencies {
+                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
+            }
+        """.trimIndent()
+        buildFile.writeText(kts)
+
+        // When (First execution)
+        val firstResult = GradleRunner.create()
+            .withProjectDir(testProjectDir)
+            .withPluginClasspath()
+            .withArguments("startDbContainer")
+            .build()
+
+        // Then
+        assertEquals(TaskOutcome.SUCCESS, firstResult.task(":startDbContainer")?.outcome)
+
+        // When (Second execution - unchanged migration files)
+        val secondResult = GradleRunner.create()
+            .withProjectDir(testProjectDir)
+            .withPluginClasspath()
+            .withArguments("startDbContainer")
+            .build()
+
+        // Then (Should be UP-TO-DATE)
+        assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":startDbContainer")?.outcome)
+
+        // When (Third execution - modified migration files)
+        migrationFile.appendText("\nCREATE TABLE orders (id SERIAL PRIMARY KEY);")
+        val thirdResult = GradleRunner.create()
+            .withProjectDir(testProjectDir)
+            .withPluginClasspath()
+            .withArguments("startDbContainer")
+            .build()
+
+        // Then (Should execute again)
+        assertEquals(TaskOutcome.SUCCESS, thirdResult.task(":startDbContainer")?.outcome)
+    }
+
+    @Test
+    fun `start task supports backwards compatible task-level trackedFiles configuration`() {
+        // Given
+        val settingsFile = File(testProjectDir, "settings.gradle.kts")
+        @Language("kotlin") val settingsKts = """rootProject.name = "test-task-uptodate""""
+        settingsFile.writeText(settingsKts)
+
+        val migrationsDir = File(testProjectDir, "src/main/resources/db/migration").apply { mkdirs() }
+        val migrationFile = File(migrationsDir, "V1__init.sql")
+        migrationFile.writeText("CREATE TABLE users (id SERIAL PRIMARY KEY);")
+
+        val buildFile = File(testProjectDir, "build.gradle.kts")
+        @Language("kotlin") val kts = """
+            import org.testcontainers.gradle.StartContainersTask
+
+            plugins {
+                id("io.github.regulskimichal.testcontainers")
+            }
+
+            testcontainers {
+                jdbcContainer("db", "postgresql") {
+                    image("postgres:17-alpine")
+                }
+            }
+
+            repositories {
+                mavenCentral()
+            }
+
+            dependencies {
+                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
+            }
+
+            afterEvaluate {
+                tasks.named<StartContainersTask>("startDbContainer") {
+                    trackedFiles.from("src/main/resources/db/migration")
+                }
+            }
+        """.trimIndent()
+        buildFile.writeText(kts)
+
+        // When (First execution)
+        val firstResult = GradleRunner.create()
+            .withProjectDir(testProjectDir)
+            .withPluginClasspath()
+            .withArguments("startDbContainer")
+            .build()
+
+        // Then
+        assertEquals(TaskOutcome.SUCCESS, firstResult.task(":startDbContainer")?.outcome)
+
+        // When (Second execution - unchanged files)
+        val secondResult = GradleRunner.create()
+            .withProjectDir(testProjectDir)
+            .withPluginClasspath()
+            .withArguments("startDbContainer")
+            .build()
+
+        // Then
+        assertEquals(TaskOutcome.UP_TO_DATE, secondResult.task(":startDbContainer")?.outcome)
     }
 }

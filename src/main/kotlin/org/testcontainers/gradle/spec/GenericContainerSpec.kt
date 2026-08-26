@@ -1,5 +1,6 @@
 package org.testcontainers.gradle.spec
 
+import org.gradle.api.file.ConfigurableFileCollection
 import org.testcontainers.gradle.SerializableDockerImageName
 import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import java.io.Serial
@@ -39,16 +40,21 @@ import java.time.Duration
  *         mountVolume("./config", "/etc/app/config")
  *         waitHttp("/health", 200)
  *         startupTimeoutSeconds(30)
+ *         trackedFiles.from("fixtures")
  *     }
  * }
  * ```
+ *
+ * @param trackedFiles Files or directories to track for UP-TO-DATE checking
  *
  * @see org.testcontainers.gradle.TestcontainersConfig.genericContainer for registration
  * @see WaitStrategySpec for container readiness detection
  */
 @Suppress("TooManyFunctions")
 @TestcontainersDslMarker
-class GenericContainerSpec {
+class GenericContainerSpec(
+    val trackedFiles: ConfigurableFileCollection
+) {
     internal var dockerImageName: SerializableDockerImageName? = null
     internal var exposedPorts: List<Int> = emptyList()
     internal var env: Map<String, String> = emptyMap()
@@ -56,6 +62,27 @@ class GenericContainerSpec {
     internal var startupTimeoutSeconds: Long = Duration.ofMinutes(1).seconds
     internal var waitStrategy: WaitStrategySpec = WaitStrategySpec.ListeningPort
     internal val volumeMounts = mutableListOf<VolumeMountSpec>()
+
+    /**
+     * Adds files or directories to track for UP-TO-DATE checking.
+     *
+     * When configured, the generated start container task is only executed if the tracked
+     * files have changed. If no files are tracked, the task always executes on each build.
+     *
+     * @param paths Variable number of file paths, directories, or Gradle file providers
+     */
+    fun trackedFiles(vararg paths: Any) {
+        trackedFiles.from(*paths)
+    }
+
+    /**
+     * Adds an iterable collection of files or directories to track for UP-TO-DATE checking.
+     *
+     * @param paths Iterable collection of file paths, directories, or Gradle file providers
+     */
+    fun trackedFiles(paths: Iterable<Any>) {
+        trackedFiles.from(paths)
+    }
 
     /**
      * Sets the Docker image name.
