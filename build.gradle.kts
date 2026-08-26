@@ -13,6 +13,7 @@ scmVersion {
         prefix = "v"
     }
     useHighestVersion = true
+    versionCreator("simple")
 }
 
 detekt {

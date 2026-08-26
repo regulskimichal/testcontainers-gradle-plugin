@@ -1,5 +1,6 @@
 package org.testcontainers.gradle.spec
 
+import org.gradle.api.file.ConfigurableFileCollection
 import org.testcontainers.gradle.SerializableDockerImageName
 import org.testcontainers.gradle.dsl.TestcontainersDslMarker
 import java.io.Serial
@@ -19,6 +20,7 @@ import java.io.Serializable
  *         username("user")
  *         password("password")
  *         portMapping(5432)  // Fixed host port 5432
+ *         trackedFiles.from("src/main/resources/db/migration")
  *     }
  * }
  * ```
@@ -36,19 +38,44 @@ import java.io.Serializable
  * }
  * ```
  *
+ * @param trackedFiles Files or directories to track for UP-TO-DATE checking
  * @param defaultCompatibleSubstitute Optional compatibility label for database-specific image substitution
  *
  * @see org.testcontainers.gradle.TestcontainersConfig.jdbcContainer for registration
  * @see org.testcontainers.gradle.DatabaseType for type-safe database selection
  */
 @TestcontainersDslMarker
-class JdbcContainerSpec(internal val defaultCompatibleSubstitute: String? = null) {
+class JdbcContainerSpec(
+    val trackedFiles: ConfigurableFileCollection,
+    internal val defaultCompatibleSubstitute: String? = null
+) {
     internal var dockerImageName: SerializableDockerImageName? = null
     internal var databaseName: String? = null
     internal var username: String? = null
     internal var password: String? = null
     internal var reuse: Boolean = false
     internal val portMappings: MutableList<PortMappingSpec> = mutableListOf()
+
+    /**
+     * Adds files or directories to track for UP-TO-DATE checking.
+     *
+     * When configured, the generated start container task is only executed if the tracked
+     * files have changed. If no files are tracked, the task always executes on each build.
+     *
+     * @param paths Variable number of file paths, directories, or Gradle file providers
+     */
+    fun trackedFiles(vararg paths: Any) {
+        trackedFiles.from(*paths)
+    }
+
+    /**
+     * Adds an iterable collection of files or directories to track for UP-TO-DATE checking.
+     *
+     * @param paths Iterable collection of file paths, directories, or Gradle file providers
+     */
+    fun trackedFiles(paths: Iterable<Any>) {
+        trackedFiles.from(paths)
+    }
 
     /**
      * Sets a custom Docker image name for this database container.

@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="17" />
+    <bytecodeTargetLevel target="17">
+      <module name="example-jooq-flyway" target="25" />
+      <module name="example-jooq-flyway.main" target="25" />
+      <module name="example-jooq-flyway.test" target="25" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="example-jooq-flyway" options="-parameters" />
+      <module name="example-jooq-flyway.main" options="-parameters" />
+      <module name="example-jooq-flyway.test" options="-parameters" />
+    </option>
   </component>
 </project>

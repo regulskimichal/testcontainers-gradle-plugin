@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.run.BootRun
 import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.gradle.DatabaseType
-import org.testcontainers.gradle.StartContainersTask
 import org.testcontainers.gradle.getContainer
 import org.testcontainers.gradle.wasContainerStarted
 
@@ -15,7 +14,7 @@ plugins {
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("net.ltgt.jooq-kotlin") version "1.0.0"
-    id("io.github.regulskimichal.testcontainers") version "0.1.0-SNAPSHOT"
+    id("io.github.regulskimichal.testcontainers") version "0.1.2-SNAPSHOT"
     id("net.ltgt.flyway") version "1.0.0"
 }
 
@@ -50,6 +49,8 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-database-postgresql")
 }
 
+val dbMigrationDir = provider { layout.projectDirectory.dir("src/main/resources/db/migration") }
+
 // Declare required containers
 testcontainers {
     jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
@@ -57,17 +58,8 @@ testcontainers {
         databaseName("postgres")
         username("postgres")
         password("postgres")
-    }
-}
-
-val dbMigrationDir = provider { layout.projectDirectory.dir("src/main/resources/db/migration") }
-
-// startPostgresContainer is registered dynamically by the plugin in afterEvaluate,
-// so project-specific inputs (trackedFiles) must also be set in afterEvaluate.
-// The plugin automatically handles mustRunAfter(clean), usesService and onlyIf for stopPostgresContainer.
-afterEvaluate {
-    tasks.named<StartContainersTask>("startPostgresContainer") {
-        trackedFiles.from(dbMigrationDir)
+        // Track database migration files and build.gradle.kts for Gradle UP-TO-DATE checking directly in DSL
+        trackedFiles.from(dbMigrationDir, layout.projectDirectory.file("build.gradle.kts"))
     }
 }
 
