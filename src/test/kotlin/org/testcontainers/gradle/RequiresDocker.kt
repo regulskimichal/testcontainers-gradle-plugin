@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.platform.commons.support.AnnotationSupport
 import org.testcontainers.DockerClientFactory
+import org.testcontainers.gradle.internal.TestcontainersCircuitBreaker
 
 class DockerAvailableCondition : ExecutionCondition {
     override fun evaluateExecutionCondition(context: ExtensionContext): ConditionEvaluationResult {
@@ -15,9 +16,12 @@ class DockerAvailableCondition : ExecutionCondition {
             }
 
         val failIfUnavailable = requiresDocker?.failIfUnavailable ?: false
+        val isDockerAvailable = TestcontainersCircuitBreaker.withReset {
+            DockerClientFactory.instance().isDockerAvailable
+        }
 
         return when {
-            DockerClientFactory.instance().isDockerAvailable -> ConditionEvaluationResult.enabled("Docker is available")
+            isDockerAvailable -> ConditionEvaluationResult.enabled("Docker is available")
             failIfUnavailable -> error("Docker is required but not available on this environment.")
             else -> ConditionEvaluationResult.disabled("Docker is not available, skipping integration test")
         }

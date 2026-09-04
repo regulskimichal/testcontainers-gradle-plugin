@@ -7,14 +7,13 @@ import org.testcontainers.gradle.DatabaseType
 import org.testcontainers.gradle.getContainer
 import org.testcontainers.gradle.wasContainerStarted
 
-
 plugins {
     kotlin("jvm") version "2.4.0"
     kotlin("plugin.spring") version "2.4.0"
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("net.ltgt.jooq-kotlin") version "1.0.0"
-    id("io.github.regulskimichal.testcontainers") version "0.1.2-SNAPSHOT"
+    id("io.github.regulskimichal.testcontainers") version "0.2.0" // x-release-please-version
     id("net.ltgt.flyway") version "1.0.0"
 }
 

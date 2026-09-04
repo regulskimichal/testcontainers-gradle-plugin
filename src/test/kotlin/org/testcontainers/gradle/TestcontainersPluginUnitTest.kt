@@ -14,7 +14,7 @@ class TestcontainersPluginUnitTest {
         val project = ProjectBuilder.builder().build()
 
         // Apply the plugin under test
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         // Configure Postgres container via the plugin's DSL extension
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
@@ -58,7 +58,7 @@ class TestcontainersPluginUnitTest {
     fun `plugin registers start task without explicitly configuring optional parameters`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
         extension.jdbcContainer("postgresdb", DatabaseType.POSTGRESQL) {
@@ -84,7 +84,7 @@ class TestcontainersPluginUnitTest {
     fun `plugin automatically resolves compatible substitute from database type`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
         extension.jdbcContainer("postgresdb", DatabaseType.POSTGRESQL) {
@@ -109,7 +109,7 @@ class TestcontainersPluginUnitTest {
     fun `genericContainer validation fails when image is missing`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
@@ -126,7 +126,7 @@ class TestcontainersPluginUnitTest {
     fun `composeContainer validation fails when no services are exposed`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
@@ -146,7 +146,7 @@ class TestcontainersPluginUnitTest {
     fun `extension accessors throw error for unregistered container name`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
 
@@ -181,7 +181,7 @@ class TestcontainersPluginUnitTest {
     fun `plugin wires trackedFiles from jdbcContainer DSL to start task`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val dummyFile = project.layout.projectDirectory.file("migrations/V1.sql").asFile
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
@@ -202,7 +202,7 @@ class TestcontainersPluginUnitTest {
     fun `plugin wires trackedFiles from genericContainer DSL to start task`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val dummyFile = project.layout.projectDirectory.file("config/app.conf").asFile
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
@@ -224,7 +224,7 @@ class TestcontainersPluginUnitTest {
     fun `plugin wires trackedFiles from composeContainer DSL to start task`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val dummyCompose = project.layout.projectDirectory.file("compose.yaml").asFile
         val dummyOverride = project.layout.projectDirectory.file("compose.override.yaml").asFile
@@ -247,7 +247,7 @@ class TestcontainersPluginUnitTest {
     fun `start task has empty trackedFiles by default and supports manual task configuration`() {
         // Given
         val project = ProjectBuilder.builder().build()
-        project.plugins.apply("io.github.regulskimichal.testcontainers")
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
 
         val extension = project.extensions.getByType(TestcontainersExtension::class.java)
         extension.jdbcContainer("postgres", DatabaseType.POSTGRESQL) {
@@ -267,5 +267,30 @@ class TestcontainersPluginUnitTest {
 
         // Then
         assertTrue(startTask.trackedFiles.files.contains(manualFile))
+    }
+
+    @Test
+    fun `start task successfully starts container and marks it as started`() {
+        // Given
+        val project = ProjectBuilder.builder().build()
+        project.plugins.apply(TESTCONTAINERS_PLUGIN_ID)
+
+        val extension = project.extensions.getByType(TestcontainersExtension::class.java)
+        extension.jdbcContainer("postgres", DatabaseType.POSTGRESQL) {}
+
+        (project as org.gradle.api.internal.project.ProjectInternal).evaluate()
+
+        val startTask = project.tasks.findByName("startPostgresContainer") as StartContainersTask
+        val mockService = io.mockk.mockk<TestcontainersBuildService>(relaxed = true)
+        val mockContainer = io.mockk.mockk<org.testcontainers.lifecycle.Startable>(relaxed = true)
+        io.mockk.every { mockService.getContainer<org.testcontainers.lifecycle.Startable>(any()) } returns mockContainer
+        startTask.testcontainersService.set(mockService)
+
+        // When
+        startTask.start()
+
+        // Then
+        io.mockk.verify(exactly = 1) { mockContainer.start() }
+        io.mockk.verify(exactly = 1) { mockService.markContainerStarted("postgres") }
     }
 }

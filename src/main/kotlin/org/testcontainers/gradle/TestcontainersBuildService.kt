@@ -4,18 +4,26 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.slf4j.LoggerFactory
+import org.testcontainers.containers.BindMode.READ_ONLY
+import org.testcontainers.containers.BindMode.READ_WRITE
 import org.testcontainers.containers.ComposeContainer
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.containers.JdbcDatabaseContainerProvider
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
+import org.testcontainers.gradle.ContainerDefinition.Compose
+import org.testcontainers.gradle.ContainerDefinition.Generic
+import org.testcontainers.gradle.ContainerDefinition.JdbcDatabase
+import org.testcontainers.gradle.ContainerDefinition.WaitStrategy.Http
+import org.testcontainers.gradle.ContainerDefinition.WaitStrategy.ListeningPort
+import org.testcontainers.gradle.ContainerDefinition.WaitStrategy.LogMessage
 import org.testcontainers.lifecycle.Startable
-import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.net.URLClassLoader
 import java.time.Duration
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 /**
  * Gradle [BuildService] that manages container lifecycles lazily on demand.
@@ -41,14 +49,13 @@ import java.util.*
  *
  * Enforces `maxParallelUsages = 1` to prevent concurrent access to shared containers,
  * ensuring that parallel test execution or code generation tasks don't interfere with
- * shared container state.
+ * the shared container state.
  *
  * @see TestcontainersExtension.service for public access patterns
  * @see StartContainersTask for automatic startup
  * @see StopContainersTask for automatic shutdown
  */
-abstract class TestcontainersBuildService
-    : BuildService<TestcontainersBuildService.Parameters>, AutoCloseable {
+abstract class TestcontainersBuildService : BuildService<TestcontainersBuildService.Parameters>, AutoCloseable {
 
     interface Parameters : BuildServiceParameters {
         /**
@@ -65,7 +72,7 @@ abstract class TestcontainersBuildService
 
     /**
      * Marks a container as started in this build execution.
-     * Called automatically by [StartContainersTask] after successful container startup.
+     * Called automatically by [StartContainersTask] after a successful container startup.
      *
      * Internal API - do not call from user build scripts.
      */
@@ -106,33 +113,31 @@ abstract class TestcontainersBuildService
     @Suppress("UNCHECKED_CAST")
     internal fun <T : Startable> createContainer(
         containerDefinition: ContainerDefinition,
-        classLoader: ClassLoader
+        classLoader: ClassLoader,
     ): T {
         return when (containerDefinition) {
-            is ContainerDefinition.JdbcDatabase -> createJdbcDatabaseContainer(containerDefinition, classLoader)
-            is ContainerDefinition.Generic -> createGenericContainer(containerDefinition)
-            is ContainerDefinition.Compose -> createComposeContainer(containerDefinition)
+            is JdbcDatabase -> createJdbcDatabaseContainer(containerDefinition, classLoader)
+            is Generic -> createGenericContainer(containerDefinition)
+            is Compose -> createComposeContainer(containerDefinition)
         } as T
     }
 
     private fun createJdbcDatabaseContainer(
-        containerDefinition: ContainerDefinition.JdbcDatabase,
-        classLoader: ClassLoader
+        containerDefinition: JdbcDatabase,
+        classLoader: ClassLoader,
     ): JdbcDatabaseContainer<*> {
         val serviceLoader = ServiceLoader.load(JdbcDatabaseContainerProvider::class.java, classLoader)
         val containerProvider = serviceLoader.firstOrNull {
             it.supports(containerDefinition.databaseType)
+        } ?: throw MissingJdbcDatabaseContainerProviderException(containerDefinition.databaseType)
+
+        val container = containerDefinition.dockerImageName?.let {
+            containerProvider.newInstance(it.toDockerImageName().versionPart)
+        } ?: containerProvider.newInstance()
+
+        containerDefinition.dockerImageName?.let { customImage ->
+            container.setImage(CompletableFuture.completedFuture(customImage.toDockerImageName().asCanonicalNameString()))
         }
-            ?: error("No JdbcDatabaseContainerProvider found for database type '${containerDefinition.databaseType}'. Make sure to add the corresponding dependency to 'testcontainersClasspath'.")
-
-        val defaultInstance = containerProvider.newInstance()
-        val containerClazz = defaultInstance.javaClass
-        val defaultImageName = defaultInstance.dockerImageName
-
-        val image = containerDefinition.dockerImageName?.toDockerImageName() ?: DockerImageName.parse(defaultImageName)
-
-        val constructor = containerClazz.getConstructor(DockerImageName::class.java)
-        val container = constructor.newInstance(image) as JdbcDatabaseContainer<*>
 
         if (containerDefinition.databaseName != null) {
             container.withDatabaseName(containerDefinition.databaseName)
@@ -159,7 +164,7 @@ abstract class TestcontainersBuildService
         return container
     }
 
-    private fun createGenericContainer(containerDefinition: ContainerDefinition.Generic): GenericContainer<*> {
+    private fun createGenericContainer(containerDefinition: Generic): GenericContainer<*> {
         val container = GenericContainer(containerDefinition.dockerImageName.toDockerImageName())
         if (containerDefinition.exposedPorts.isNotEmpty()) {
             containerDefinition.exposedPorts.forEach { port ->
@@ -173,21 +178,20 @@ abstract class TestcontainersBuildService
         container.withReuse(containerDefinition.reuse)
 
         // Set wait strategy
-        val tcWait = when (containerDefinition.waitStrategy) {
-            is ContainerDefinition.WaitStrategy.ListeningPort -> Wait.forListeningPort()
-            is ContainerDefinition.WaitStrategy.Http -> Wait.forHttp(containerDefinition.waitStrategy.path)
-                .forStatusCode(containerDefinition.waitStrategy.statusCode)
-            is ContainerDefinition.WaitStrategy.LogMessage -> Wait.forLogMessage(
-                containerDefinition.waitStrategy.regex,
-                containerDefinition.waitStrategy.times
-            )
-        }.withStartupTimeout(Duration.ofSeconds(containerDefinition.startupTimeoutSeconds))
-        container.waitingFor(tcWait)
+        val tcWait = with(containerDefinition.waitStrategy) {
+            when (this) {
+                is ListeningPort -> Wait.forListeningPort()
+                is Http -> Wait.forHttp(this.path).forStatusCode(this.statusCode)
+                is LogMessage -> Wait.forLogMessage(this.regex, this.times)
+            }
+        }
+
+        container.waitingFor(tcWait.withStartupTimeout(Duration.ofSeconds(containerDefinition.startupTimeoutSeconds)))
 
         // Bind volumes
-        for (mount in containerDefinition.volumeMounts) {
-            val bindMode = if (mount.readOnly) org.testcontainers.containers.BindMode.READ_ONLY else org.testcontainers.containers.BindMode.READ_WRITE
-            container.withFileSystemBind(mount.hostPath, mount.containerPath, bindMode)
+        for ((hostPath, containerPath, readOnly) in containerDefinition.volumeMounts) {
+            val bindMode = if (readOnly) READ_ONLY else READ_WRITE
+            container.withFileSystemBind(hostPath, containerPath, bindMode)
         }
 
         // Attach slf4j logger
@@ -197,9 +201,8 @@ abstract class TestcontainersBuildService
         return container
     }
 
-    private fun createComposeContainer(containerDefinition: ContainerDefinition.Compose): ComposeContainer {
-        val container = ComposeContainer(File(containerDefinition.composeFilePath))
-            .withRemoveVolumes(true)
+    private fun createComposeContainer(containerDefinition: Compose): ComposeContainer {
+        val container = ComposeContainer(File(containerDefinition.composeFilePath)).withRemoveVolumes(true)
 
         val containerLogger = LoggerFactory.getLogger("testcontainers.${containerDefinition.name}")
         val logConsumer = Slf4jLogConsumer(containerLogger)

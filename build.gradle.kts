@@ -56,6 +56,8 @@ dependencies {
     testImplementation(gradleTestKit())
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.mockk)
 }
 
 dependencyLocking {

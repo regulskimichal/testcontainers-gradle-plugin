@@ -25,43 +25,43 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = $$"""
-            import org.testcontainers.containers.JdbcDatabaseContainer
-            import org.testcontainers.gradle.getContainer
+        import org.testcontainers.containers.JdbcDatabaseContainer
+        import org.testcontainers.gradle.getContainer
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                jdbcContainer("db", "postgresql") {
-                    image("postgres:17-alpine")
-                    databaseName("testdb")
-                    username("testuser")
-                    password("testpassword")
-                }
+        testcontainers {
+            jdbcContainer("db", "postgresql") {
+                image("postgres:17-alpine")
+                databaseName("testdb")
+                username("testuser")
+                password("testpassword")
             }
+        }
 
-            repositories {
-                mavenCentral()
-            }
+        repositories {
+            mavenCentral()
+        }
 
-            dependencies {
-                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
-            }
+        dependencies {
+            "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
+        }
 
-            tasks.register("testTask") {
-                dependsOn("startDbContainer")
-                usesService(testcontainers.service)
-                doFirst {
-                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
-                    val url = db.jdbcUrl
-                    val user = db.username
-                    val password = db.password
-                    println("TESTCONTAINERS_JDBC_URL=$url")
-                    println("TESTCONTAINERS_USER=$user")
-                    println("TESTCONTAINERS_PASSWORD=$password")
-                }
+        tasks.register("testTask") {
+            dependsOn("startDbContainer")
+            usesService(testcontainers.service)
+            doFirst {
+                val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
+                val url = db.jdbcUrl
+                val user = db.username
+                val password = db.password
+                println("TESTCONTAINERS_JDBC_URL=$url")
+                println("TESTCONTAINERS_USER=$user")
+                println("TESTCONTAINERS_PASSWORD=$password")
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -90,52 +90,52 @@ class TestcontainersPluginTest {
 
         val composeFile = File(testProjectDir, "compose.yaml")
         @Language("yaml") val yaml = """
-            services:
-              web:
-                image: alpine:3.18
-                command: nc -lk -p 8080 -e echo "hello"
-                ports:
-                  - "8080"
-              cache:
-                image: alpine:3.18
-                command: nc -lk -p 6379 -e echo "hello"
-                ports:
-                  - "6379"
+        services:
+          web:
+            image: alpine:3.18
+            command: nc -lk -p 8080 -e echo "hello"
+            ports:
+              - "8080"
+          cache:
+            image: alpine:3.18
+            command: nc -lk -p 6379 -e echo "hello"
+            ports:
+              - "6379"
         """.trimIndent()
         composeFile.writeText(yaml)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = $$"""
-            import org.testcontainers.containers.ComposeContainer
-            import org.testcontainers.gradle.getContainer
+        import org.testcontainers.containers.ComposeContainer
+        import org.testcontainers.gradle.getContainer
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                composeContainer("my-stack", "compose.yaml") {
-                    service("web", 8080)
-                    service("cache", 6379)
-                }
+        testcontainers {
+            composeContainer("my-stack", "compose.yaml") {
+                service("web", 8080)
+                service("cache", 6379)
             }
+        }
 
-            tasks.register("testTask") {
-                dependsOn("startMyStackContainer")
-                usesService(testcontainers.service)
-                doFirst {
-                    val container = testcontainers.getContainer<ComposeContainer>("my-stack").get()
-                    val webHost = container.getServiceHost("web", 8080)
-                    val webPort = container.getServicePort("web", 8080)
-                    val cacheHost = container.getServiceHost("cache", 6379)
-                    val cachePort = container.getServicePort("cache", 6379)
-                    
-                    println("COMPOSE_WEB_HOST=$webHost")
-                    println("COMPOSE_WEB_PORT=$webPort")
-                    println("COMPOSE_CACHE_HOST=$cacheHost")
-                    println("COMPOSE_CACHE_PORT=$cachePort")
-                }
+        tasks.register("testTask") {
+            dependsOn("startMyStackContainer")
+            usesService(testcontainers.service)
+            doFirst {
+                val container = testcontainers.getContainer<ComposeContainer>("my-stack").get()
+                val webHost = container.getServiceHost("web", 8080)
+                val webPort = container.getServicePort("web", 8080)
+                val cacheHost = container.getServiceHost("cache", 6379)
+                val cachePort = container.getServicePort("cache", 6379)
+                
+                println("COMPOSE_WEB_HOST=$webHost")
+                println("COMPOSE_WEB_PORT=$webPort")
+                println("COMPOSE_CACHE_HOST=$cacheHost")
+                println("COMPOSE_CACHE_PORT=$cachePort")
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -165,23 +165,23 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = """
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                jdbcContainer("db", "postgresql") {
-                    image("postgres:17-alpine")
-                }
+        testcontainers {
+            jdbcContainer("db", "postgresql") {
+                image("postgres:17-alpine")
             }
+        }
 
-            repositories {
-                mavenCentral()
-            }
+        repositories {
+            mavenCentral()
+        }
 
-            dependencies {
-                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
-            }
+        dependencies {
+            "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -212,23 +212,23 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = """
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                jdbcContainer("db", "postgresql") {
-                    image("postgres:17-alpine")
-                }
+        testcontainers {
+            jdbcContainer("db", "postgresql") {
+                image("postgres:17-alpine")
             }
+        }
 
-            repositories {
-                mavenCentral()
-            }
+        repositories {
+            mavenCentral()
+        }
 
-            dependencies {
-                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
-            }
+        dependencies {
+            "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -248,68 +248,68 @@ class TestcontainersPluginTest {
         // Given
         val settingsFile = File(testProjectDir, "settings.gradle.kts")
         @Language("kotlin") val settingsKts = """
-            rootProject.name = "multi-project"
-            include("app", "core")
+        rootProject.name = "multi-project"
+        include("app", "core")
         """.trimIndent()
         settingsFile.writeText(settingsKts)
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = """
-            plugins {
-                id("io.github.regulskimichal.testcontainers") apply false
+        plugins {
+            id("io.github.regulskimichal.testcontainers") apply false
+        }
+        
+        subprojects {
+            apply(plugin = "io.github.regulskimichal.testcontainers")
+
+            repositories {
+                mavenCentral()
             }
             
-            subprojects {
-                apply(plugin = "io.github.regulskimichal.testcontainers")
+            dependencies {
+                "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
+            }
 
-                repositories {
-                    mavenCentral()
-                }
-                
-                dependencies {
-                    "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
-                }
-
-                configure<org.testcontainers.gradle.TestcontainersExtension> {
-                    jdbcContainer("db", "postgresql") {
-                        image("postgres:17-alpine")
-                    }
+            configure<org.testcontainers.gradle.TestcontainersExtension> {
+                jdbcContainer("db", "postgresql") {
+                    image("postgres:17-alpine")
                 }
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
         val appDir = File(testProjectDir, "app").apply { mkdirs() }
         val appBuildFile = File(appDir, "build.gradle.kts")
         @Language("kotlin") val appKts = $$"""
-            import org.testcontainers.containers.JdbcDatabaseContainer
-            import org.testcontainers.gradle.getContainer
+        import org.testcontainers.containers.JdbcDatabaseContainer
+        import org.testcontainers.gradle.getContainer
 
-            tasks.register("printAppDb") {
-                dependsOn("startDbContainer")
-                usesService(testcontainers.service)
-                doLast {
-                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
-                    println("APP_DB_PORT=${db.firstMappedPort}")
-                }
+        tasks.register("printAppDb") {
+            dependsOn("startDbContainer")
+            usesService(testcontainers.service)
+            doLast {
+                val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
+                println("APP_DB_PORT=${db.firstMappedPort}")
             }
+        }
         """.trimIndent()
         appBuildFile.writeText(appKts)
 
         val coreDir = File(testProjectDir, "core").apply { mkdirs() }
         val coreBuildFile = File(coreDir, "build.gradle.kts")
         @Language("kotlin") val coreKts = $$"""
-            import org.testcontainers.containers.JdbcDatabaseContainer
-            import org.testcontainers.gradle.getContainer
+        import org.testcontainers.containers.JdbcDatabaseContainer
+        import org.testcontainers.gradle.getContainer
 
-            tasks.register("printCoreDb") {
-                dependsOn("startDbContainer")
-                usesService(testcontainers.service)
-                doLast {
-                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
-                    println("CORE_DB_PORT=${db.firstMappedPort}")
-                }
+        tasks.register("printCoreDb") {
+            dependsOn("startDbContainer")
+            usesService(testcontainers.service)
+            doLast {
+                val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
+                println("CORE_DB_PORT=${db.firstMappedPort}")
             }
+        }
         """.trimIndent()
         coreBuildFile.writeText(coreKts)
 
@@ -354,36 +354,36 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = $$"""
-            import org.testcontainers.containers.GenericContainer
-            import org.testcontainers.gradle.getContainer
-            import org.testcontainers.containers.wait.strategy.Wait
-            import java.net.URL
+        import org.testcontainers.containers.GenericContainer
+        import org.testcontainers.gradle.getContainer
+        import org.testcontainers.containers.wait.strategy.Wait
+        import java.net.URL
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                genericContainer("web") {
-                    image("nginx:alpine")
-                    exposedPorts(80)
-                    mountVolume("$${htmlDir.absolutePath.replace("""\""", "/")}", "/usr/share/nginx/html", true)
-                    waitHttp("/")
-                }
+        testcontainers {
+            genericContainer("web") {
+                image("nginx:alpine")
+                exposedPorts(80)
+                mountVolume("$${htmlDir.absolutePath.replace("""\""", "/")}", "/usr/share/nginx/html", true)
+                waitHttp("/")
             }
+        }
 
-            tasks.register("testWeb") {
-                dependsOn("startWebContainer")
-                usesService(testcontainers.service)
-                doLast {
-                    val web = testcontainers.getContainer<GenericContainer<*>>("web").get()
-                    val host = web.host
-                    val port = web.firstMappedPort
-                    val url = URL("http://$host:$port/")
-                    val content = url.readText()
-                    println("WEB_CONTENT=${content.trim()}")
-                }
+        tasks.register("testWeb") {
+            dependsOn("startWebContainer")
+            usesService(testcontainers.service)
+            doLast {
+                val web = testcontainers.getContainer<GenericContainer<*>>("web").get()
+                val host = web.host
+                val port = web.firstMappedPort
+                val url = URL("http://$host:$port/")
+                val content = url.readText()
+                println("WEB_CONTENT=${content.trim()}")
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -411,20 +411,20 @@ class TestcontainersPluginTest {
             id("io.github.regulskimichal.testcontainers")
         }
 
-            testcontainers {
-                genericContainer("nginx") {
-                    image("nginx:alpine")
-                    exposedPorts(80)
-                }
+        testcontainers {
+            genericContainer("nginx") {
+                image("nginx:alpine")
+                exposedPorts(80)
             }
+        }
 
-            tasks.register("failingTask") {
-                dependsOn("startNginxContainer")
-                finalizedBy("stopNginxContainer")
-                doLast {
-                    throw GradleException("Deliberate test failure")
-                }
+        tasks.register("failingTask") {
+            dependsOn("startNginxContainer")
+            finalizedBy("stopNginxContainer")
+            doLast {
+                throw GradleException("Deliberate test failure")
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -456,39 +456,40 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = $$"""
-            import org.testcontainers.containers.JdbcDatabaseContainer
-            import org.testcontainers.gradle.getContainer
+        import org.testcontainers.containers.JdbcDatabaseContainer
+        import org.testcontainers.gradle.DatabaseType
+        import org.testcontainers.gradle.getContainer
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                jdbcContainer("db", "postgresql") {
-                    image("postgis/postgis:15-3.3-alpine")
-                    databaseName("testdb")
-                    username("testuser")
-                    password("testpassword")
-                }
+        testcontainers {
+            jdbcContainer("db", DatabaseType.POSTGRESQL) {
+                image("postgis/postgis:15-3.3-alpine")
+                databaseName("testdb")
+                username("testuser")
+                password("testpassword")
             }
+        }
 
-            repositories {
-                mavenCentral()
-            }
+        repositories {
+            mavenCentral()
+        }
 
-            dependencies {
-                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
-            }
+        dependencies {
+            "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
+        }
 
-            tasks.register("testTask") {
-                dependsOn("startDbContainer")
-                usesService(testcontainers.service)
-                doLast {
-                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
-                    println("RESOLVED_IMAGE=${db.dockerImageName}")
-                    println("DB_URL=${db.jdbcUrl}")
-                }
+        tasks.register("testTask") {
+            dependsOn("startDbContainer")
+            usesService(testcontainers.service)
+            doLast {
+                val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("db").get()
+                println("RESOLVED_IMAGE=${db.dockerImageName}")
+                println("DB_URL=${db.jdbcUrl}")
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -513,28 +514,28 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = $$"""
-            import org.testcontainers.containers.GenericContainer
-            import org.testcontainers.gradle.getContainer
+        import org.testcontainers.containers.GenericContainer
+        import org.testcontainers.gradle.getContainer
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                genericContainer("redis") {
-                    image("redis:7-alpine", "redis")
-                    exposedPorts(6379)
-                }
+        testcontainers {
+            genericContainer("redis") {
+                image("redis:7-alpine", "redis")
+                exposedPorts(6379)
             }
+        }
 
-            tasks.register("testTask") {
-                dependsOn("startRedisContainer")
-                usesService(testcontainers.service)
-                doLast {
-                    val redis = testcontainers.getContainer<GenericContainer<*>>("redis").get()
-                    println("RESOLVED_IMAGE=${redis.dockerImageName}")
-                }
+        tasks.register("testTask") {
+            dependsOn("startRedisContainer")
+            usesService(testcontainers.service)
+            doLast {
+                val redis = testcontainers.getContainer<GenericContainer<*>>("redis").get()
+                println("RESOLVED_IMAGE=${redis.dockerImageName}")
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -560,15 +561,15 @@ class TestcontainersPluginTest {
         val buildFile = File(testProjectDir, "build.gradle.kts")
 
         @Language("kotlin") val kts = """
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                composeContainer("my-stack", "non-existent-compose.yaml") {
-                    service("web", 8080)
-                }
+        testcontainers {
+            composeContainer("my-stack", "non-existent-compose.yaml") {
+                service("web", 8080)
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -592,27 +593,27 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = $$"""
-            import org.testcontainers.containers.JdbcDatabaseContainer
-            import org.testcontainers.gradle.getContainer
+        import org.testcontainers.containers.JdbcDatabaseContainer
+        import org.testcontainers.gradle.getContainer
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                genericContainer("web") {
-                    image("nginx:alpine")
-                }
+        testcontainers {
+            genericContainer("web") {
+                image("nginx:alpine")
             }
+        }
 
-            tasks.register("testTask") {
-                dependsOn("startWebContainer")
-                usesService(testcontainers.service)
-                doLast {
-                    val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("web").get()
-                    println("RESOLVED_DB=$db")
-                }
+        tasks.register("testTask") {
+            dependsOn("startWebContainer")
+            usesService(testcontainers.service)
+            doLast {
+                val db = testcontainers.getContainer<JdbcDatabaseContainer<*>>("web").get()
+                println("RESOLVED_DB=$db")
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -636,23 +637,23 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = """
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                jdbcContainer("db", "postgresql") {
-                    image("postgres:17-alpine")
-                }
+        testcontainers {
+            jdbcContainer("db", "postgresql") {
+                image("postgres:17-alpine")
             }
+        }
 
-            repositories {
-                mavenCentral()
-            }
+        repositories {
+            mavenCentral()
+        }
 
-            dependencies {
-                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
-            }
+        dependencies {
+            "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -690,24 +691,24 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = """
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                jdbcContainer("db", "postgresql") {
-                    image("postgres:17-alpine")
-                    trackedFiles.from("src/main/resources/db/migration")
-                }
+        testcontainers {
+            jdbcContainer("db", "postgresql") {
+                image("postgres:17-alpine")
+                trackedFiles.from("src/main/resources/db/migration")
             }
+        }
 
-            repositories {
-                mavenCentral()
-            }
+        repositories {
+            mavenCentral()
+        }
 
-            dependencies {
-                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
-            }
+        dependencies {
+            "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 
@@ -756,31 +757,31 @@ class TestcontainersPluginTest {
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
         @Language("kotlin") val kts = """
-            import org.testcontainers.gradle.StartContainersTask
+        import org.testcontainers.gradle.StartContainersTask
 
-            plugins {
-                id("io.github.regulskimichal.testcontainers")
-            }
+        plugins {
+            id("io.github.regulskimichal.testcontainers")
+        }
 
-            testcontainers {
-                jdbcContainer("db", "postgresql") {
-                    image("postgres:17-alpine")
-                }
+        testcontainers {
+            jdbcContainer("db", "postgresql") {
+                image("postgres:17-alpine")
             }
+        }
 
-            repositories {
-                mavenCentral()
-            }
+        repositories {
+            mavenCentral()
+        }
 
-            dependencies {
-                "testcontainersClasspath"("org.testcontainers:postgresql:1.20.1")
-            }
+        dependencies {
+            "testcontainersClasspath"("org.testcontainers:testcontainers-postgresql:2.0.5")
+        }
 
-            afterEvaluate {
-                tasks.named<StartContainersTask>("startDbContainer") {
-                    trackedFiles.from("src/main/resources/db/migration")
-                }
+        afterEvaluate {
+            tasks.named<StartContainersTask>("startDbContainer") {
+                trackedFiles.from("src/main/resources/db/migration")
             }
+        }
         """.trimIndent()
         buildFile.writeText(kts)
 

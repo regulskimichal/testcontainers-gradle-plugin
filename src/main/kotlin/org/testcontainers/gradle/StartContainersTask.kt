@@ -14,6 +14,7 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
+import org.testcontainers.gradle.internal.TestcontainersCircuitBreaker
 import org.testcontainers.lifecycle.Startable
 
 /**
@@ -133,7 +134,9 @@ abstract class StartContainersTask : DefaultTask() {
         for (definition in containerDefinitions.get()) {
             logger.lifecycle("Starting container: ${definition.name}")
             val container = service.getContainer<Startable>(definition)
-            container.start()
+            TestcontainersCircuitBreaker.withReset {
+                container.start()
+            }
             service.markContainerStarted(definition.name)
         }
         markerFile.orNull?.asFile?.also { f ->
