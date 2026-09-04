@@ -1,6 +1,7 @@
 import org.gradle.api.initialization.resolve.RepositoriesMode
 
 pluginManagement {
+    includeBuild("../..")
     repositories {
         mavenLocal()
         gradlePluginPortal()

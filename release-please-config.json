@@ -4,7 +4,12 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "package-name": "testcontainers-gradle-plugin"
+      "package-name": "testcontainers-gradle-plugin",
+      "extra-files": [
+        "README.md",
+        "examples/simple/build.gradle.kts",
+        "examples/jooq-flyway/build.gradle.kts"
+      ]
     }
   }
 }
