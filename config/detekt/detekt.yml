@@ -3,8 +3,11 @@ complexity:
     active: false
     ignorePrivate: true
   LongMethod:
-    excludes: ['**/test/**']
+    excludes: [ '**/test/**' ]
 
 style:
   MaxLineLength:
     active: false
+  MaxChainedCallsOnSameLine:
+    active: true
+    maxChainedCalls: 3

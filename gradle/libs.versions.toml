@@ -6,13 +6,16 @@ pluginPublish = "2.1.1"
 dokka = "2.2.0"
 detekt = "1.23.8"
 axionRelease = "1.21.3"
+mockk = "1.14.11"
 
 [libraries]
 testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-core = { group = "org.testcontainers", name = "testcontainers" }
 testcontainers-jdbc = { group = "org.testcontainers", name = "testcontainers-jdbc" }
+testcontainers-postgresql = { group = "org.testcontainers", name = "testcontainers-postgresql" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 kotlin-test-junit5 = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit5", version.ref = "kotlin" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 
 [plugins]
 gradle-pluginPublish = { id = "com.gradle.plugin-publish", version.ref = "pluginPublish" }
