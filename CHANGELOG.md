@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/regulskimichal/testcontainers-gradle-plugin/compare/v0.2.0...v0.2.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* TestcontainersBuildService should not unnecessarily call constructor of provided JdbcDatabaseContainer subclass ([09d2b88](https://github.com/regulskimichal/testcontainers-gradle-plugin/commit/09d2b8851463b3b1df6647b46a0618d015b08b55))
+* unlock Gradle daemon failed state when started without Docker by decorating container.start() with TestcontainersCircuitBreaker ([52ca47c](https://github.com/regulskimichal/testcontainers-gradle-plugin/commit/52ca47cb4abbcb1deb3afbd1ac93bff2216db080))
+
 ## [0.2.0](https://github.com/regulskimichal/testcontainers-gradle-plugin/compare/v0.1.1...v0.2.0) (2026-08-26)
 
 
