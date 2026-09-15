@@ -57,7 +57,7 @@ Add the plugin to your `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    id("io.github.regulskimichal.testcontainers") version "0.2.1" // x-release-please-version
+    id("io.github.regulskimichal.testcontainers") version "0.2.2" // x-release-please-version
 }
 ```
 

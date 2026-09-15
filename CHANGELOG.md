@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/regulskimichal/testcontainers-gradle-plugin/compare/v0.2.1...v0.2.2) (2026-09-15)
+
+
+### Bug Fixes
+
+* **deps:** update dependency org.jetbrains.kotlin:kotlin-test-junit5 to v2.4.20 ([05463ee](https://github.com/regulskimichal/testcontainers-gradle-plugin/commit/05463ee0d24dbd4fafa6dfd2e06f65b42a6b4c1e))
+* **deps:** update dependency org.jetbrains.kotlin:kotlin-test-junit5 to v2.4.20 ([e06b296](https://github.com/regulskimichal/testcontainers-gradle-plugin/commit/e06b296c88111574be2d7a4cd1f4d631ee5d41b4))
+
 ## [0.2.1](https://github.com/regulskimichal/testcontainers-gradle-plugin/compare/v0.2.0...v0.2.1) (2026-09-04)
 
 
