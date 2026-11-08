@@ -6,7 +6,7 @@ pluginPublish = "2.2.1"
 dokka = "2.2.0"
 detekt = "1.23.8"
 axionRelease = "1.21.3"
-mockk = "1.14.11"
+mockk = "1.14.12"
 
 [libraries]
 testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
